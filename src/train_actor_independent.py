@@ -14,7 +14,7 @@ Difference between A and B isolates what the fusion-feature leak was worth.
 
 Base hyperparameters are verbatim from the original CFG. Changes are marked CHANGED.
 """
-import os, glob, json, gc, warnings
+import os, glob, json, gc, hashlib, warnings
 import numpy as np
 import pandas as pd
 import torch
@@ -22,7 +22,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import librosa
 from torch.utils.data import Dataset, DataLoader
-from torchvision.models.video import r3d_18, R3D_18_Weights
+from torchvision.models.video import r3d_18
 from sklearn.model_selection import GroupKFold, GroupShuffleSplit
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils.class_weight import compute_class_weight
@@ -55,6 +55,29 @@ EMOTIONS = ["neutral", "calm", "happy", "sad", "angry", "fearful", "disgust", "s
 # load time (not baked into the cache) so it stays a free parameter.
 KIN_MEAN = torch.tensor([0.43216, 0.394666, 0.37645]).view(3, 1, 1, 1)
 KIN_STD = torch.tensor([0.22803, 0.22145, 0.216989]).view(3, 1, 1, 1)
+
+# ---------------------------------------------------------------- pretrained weights, offline
+# Kaggle kernels have no network here (enable_internet is set, but DNS still fails -- the account
+# needs phone verification), so r3d_18(weights=KINETICS400_V1) cannot fetch its checkpoint.
+# The weights come from a public dataset instead.
+#
+# That dataset is a stranger's upload, so it is not trusted on faith: torchvision names
+# checkpoints <arch>-<first 8 hex of sha256>.pth and torch.hub verifies exactly that prefix.
+# Re-checking it here makes the file provably bit-identical to the official KINETICS400_V1
+# checkpoint. Wrong or tampered weights would silently poison every number in the paper.
+R3D_SHA_PREFIX = "b3b3357e"
+_w = glob.glob("/kaggle/input/**/r3d_18-*.pth", recursive=True)
+if not _w:
+    print("r3d_18 weights not attached. /kaggle/input contains:", flush=True)
+    for p in sorted(glob.glob("/kaggle/input/*/*", recursive=True))[:40]:
+        print("   ", p, flush=True)
+    raise SystemExit("attach sabreenelkamash/r3d-18-pretrained-weights")
+_digest = hashlib.sha256(open(_w[0], "rb").read()).hexdigest()
+if not _digest.startswith(R3D_SHA_PREFIX):
+    raise SystemExit(f"REFUSING TO TRAIN: {_w[0]} sha256 starts {_digest[:8]}, expected "
+                     f"{R3D_SHA_PREFIX}. This is not the official KINETICS400_V1 checkpoint.")
+R3D_STATE = torch.load(_w[0], map_location="cpu")
+print(f"r3d_18 weights verified: sha256 {_digest[:8]}... matches official checkpoint", flush=True)
 
 # ---------------------------------------------------------------- data
 
@@ -175,7 +198,8 @@ class VideoModel(nn.Module):
     # architecture change that would need re-tuning we have no budget to verify.
     def __init__(self, n_classes=8, dropout=0.4):
         super().__init__()
-        bb = r3d_18(weights=R3D_18_Weights.KINETICS400_V1)
+        bb = r3d_18(weights=None)
+        bb.load_state_dict(R3D_STATE)   # hash-verified above; identical to KINETICS400_V1
         self.backbone = nn.Sequential(*list(bb.children())[:-1])
         self.refine = nn.Sequential(
             nn.Conv3d(512, 256, 3, padding=1), nn.ReLU(True),
