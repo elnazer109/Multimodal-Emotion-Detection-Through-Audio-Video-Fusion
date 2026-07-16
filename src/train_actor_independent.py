@@ -58,8 +58,15 @@ KIN_STD = torch.tensor([0.22803, 0.22145, 0.216989]).view(3, 1, 1, 1)
 
 # ---------------------------------------------------------------- data
 
-CACHE = glob.glob("/kaggle/input/*/faces_u8.npy")
-assert CACHE, "face cache not attached"
+# Recursive: this environment nests mounts (the RAVDESS set lands at
+# /kaggle/input/datasets/orvile/ravdess-dataset, not /kaggle/input/ravdess-dataset), and a
+# kernel-output source nests too. A one-level glob silently finds nothing.
+CACHE = glob.glob("/kaggle/input/**/faces_u8.npy", recursive=True)
+if not CACHE:
+    print("faces_u8.npy not found. /kaggle/input contains:", flush=True)
+    for p in sorted(glob.glob("/kaggle/input/**", recursive=True))[:60]:
+        print("   ", p, flush=True)
+    raise SystemExit("face cache not attached -- check kernel_sources")
 FACES = np.load(CACHE[0], mmap_mode="r")               # (N,16,112,112,3) uint8
 pairs = pd.read_csv(os.path.join(os.path.dirname(CACHE[0]), "manifest.csv"))
 assert len(pairs) == len(FACES) == 2452, f"{len(pairs)} vs {len(FACES)}"
@@ -207,7 +214,7 @@ def cw(idx):
 
 def train_base(kind, tr_idx, tag):
     """CHANGED: early stopping uses actors carved from the TRAINING set, never the test fold."""
-    g = pairs.actor.iloc[tr_idx].values
+    g = ACTORS[tr_idx]
     inner_tr, inner_va = next(GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=SEED)
                               .split(tr_idx, groups=g))
     a, b = np.asarray(tr_idx)[inner_tr], np.asarray(tr_idx)[inner_va]
