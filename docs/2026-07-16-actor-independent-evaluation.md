@@ -37,9 +37,39 @@ Everything below was checked against the data or the code, not asserted from rea
 | Metric is max-over-epochs on the scored set | **verified** | cells 832→839→840: best-val checkpoint re-scored on that same val loader |
 | 4,904 videos vs 2,452 audio; key collides | **verified** | Kaggle file listing: 2,452 each of modality 01/02/03 |
 | Fused features unscaled | **verified** | cell 33 concatenates raw MFCC means (≈ −300) with 0–1 softmax; `FusionMLP`'s first `BatchNorm` sits *after* the first `Linear` |
-| Video norm fights pretrained weights | **verified** | cell 15 standardises per clip; `R3D_18_Weights.KINETICS400_V1` expects Kinetics stats |
+| Video norm mismatches pretrained weights | **verified as a mismatch, NOT as a defect** | cell 15 standardises per clip; `R3D_18_Weights.KINETICS400_V1` expects Kinetics stats. See §2.1 — correcting it appears to *hurt*. |
 | Cell 5's "Song only" comment is wrong | **verified** | 1,440 speech + 1,012 song = 2,452; disgust/surprised (192 each) exist only in speech |
 | Dataset is 25.6 GB | **verified** | `orvile/ravdess-dataset` = 25,615,024,242 bytes |
+
+### 2.1 The Kinetics normalization change may be a regression
+
+Paper-arm fold 1, measured 2026-07-17, against the original notebook's committed fold-1 outputs
+on the same split and seed:
+
+| model | ours | original | delta |
+|---|---|---|---|
+| audio | 78.21 | 80.65 | −2.4 |
+| video | 85.54 | 91.24 | **−5.7** |
+| fusion | **94.70** | 94.29 (5-fold mean) | **+0.41** |
+
+The Kinetics change was introduced on the theory that feeding Kinetics-pretrained weights
+per-clip-standardized inputs "fights" them. Video came out **5.7 points worse**. A plausible
+mechanism running the other way: per-clip standardization removes per-clip lighting and contrast
+variation, and RAVDESS records each actor under consistent studio conditions, so normalizing the
+nuisance variation away may matter more here than matching Kinetics' global channel statistics.
+
+**This is not yet attributable.** Audio dropped 2.4 points on the same fold and *audio was not
+changed at all* — so roughly 2.4 points of run-to-run nondeterminism (cuDNN autotuning, dropout,
+dataloader order) is in play. Video's 5.7 exceeds that but not decisively.
+
+**Do not claim Kinetics normalization as an improvement in the paper on this evidence.** Settling
+it needs one ablation: per-clip normalization, everything else held fixed. That did not fit the
+one-run budget.
+
+Worth noting regardless: fusion improved *despite* being fed worse video features, which suggests
+the StandardScaler contributes more than the +0.41 headline implies — and that the two changes
+should have been measured separately rather than bundled. Bundling them was a scoping decision
+made against the deadline (§5); this is its cost.
 
 ### Corrections to earlier analysis
 
