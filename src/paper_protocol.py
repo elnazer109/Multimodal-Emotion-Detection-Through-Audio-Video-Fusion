@@ -44,8 +44,33 @@ from tqdm import tqdm
 warnings.filterwarnings("ignore")
 SEED = 42
 torch.manual_seed(SEED); np.random.seed(SEED)
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 OUT = "/kaggle/working"
+
+
+def require_usable_gpu():
+    """Fail fast and loud rather than silently training on CPU.
+
+    Kaggle's default GPU is a P100 (sm_60) and the preinstalled torch (cu128) only supports
+    sm_70+, so `torch.cuda.is_available()` returns True while every kernel launch fails. The
+    first version of this script trusted is_available(), fell back to CPU, and spent an hour
+    producing one audio fold. A run that cannot finish should die in seconds.
+    Push with:  kaggle kernels push --accelerator NvidiaTeslaT4
+    """
+    if not torch.cuda.is_available():
+        raise SystemExit("NO GPU ALLOCATED. Refusing to train on CPU (R3D-18 would take days).")
+    name = torch.cuda.get_device_name(0)
+    major, minor = torch.cuda.get_device_capability(0)
+    print(f"GPU: {name}  sm_{major}{minor}  torch {torch.__version__}", flush=True)
+    try:
+        _ = (torch.randn(64, 64, device="cuda") @ torch.randn(64, 64, device="cuda")).sum().item()
+    except Exception as e:
+        raise SystemExit(f"GPU {name} (sm_{major}{minor}) is UNUSABLE with torch "
+                         f"{torch.__version__}: {e}\nRe-push with --accelerator NvidiaTeslaT4.")
+    print("GPU verified: a real kernel launched and returned.", flush=True)
+    return "cuda"
+
+
+DEVICE = require_usable_gpu()
 
 CFG = dict(
     sr=22050, n_mfcc=40, n_fft=2048, hop_length=512, mfcc_fixed_frames=130,
