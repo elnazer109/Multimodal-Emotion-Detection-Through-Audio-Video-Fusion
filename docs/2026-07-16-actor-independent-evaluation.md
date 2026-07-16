@@ -59,16 +59,32 @@ get cited as findings:
 
 ## 3. Decisions
 
-**Report both splits; the honest number leads.** The paper's random split is retained as a
-labelled "paper-comparable" row so the reproduction claim stands, and actor-independent GroupKFold
-becomes the headline. Framing: *the published 96.06% depends on speaker leakage; under
-actor-independent evaluation the same architecture gets X%, and our fixes take it to Y%.* A
-reproduction that finds a methodological flaw is a stronger contribution than a +2% tuning delta,
-and it survives a reviewer running the obvious check.
+**Report three rows, not two.** The task has two legitimate but different questions in it, and
+collapsing them into one number is what produced the original problem.
 
-The paper-comparable row is **cited from the committed notebook outputs, not re-run** — that
-protocol's numbers already exist, and re-running them would cost a full training cycle for no new
-information.
+| # | protocol | what it answers |
+|---|---|---|
+| 1 | paper's split, paper's code — **94.29%**, cited | the published claim |
+| 2 | paper's split, our two fixes — `src/paper_protocol.py` | *did we improve the published architecture?* |
+| 3 | actor-independent, our fixes — `src/train_actor_independent.py` | *does it read emotion at all?* |
+
+Row 2 exists because "beat the paper" is a real requirement and there is an honest way to satisfy
+it: **same split, same metric, same hyperparameters, better implementation.** It is directly
+comparable to 94.29% and defensible as *"the published architecture, implemented correctly, on the
+published benchmark."* Kinetics normalization alone should be a genuine gain — the original feeds
+Kinetics-pretrained weights inputs from the wrong distribution.
+
+Row 2 is explicitly **not** a claim that the model reads emotion better. Actors still leak across
+those folds. Conflating rows 2 and 3 would reproduce exactly the error this document exists to
+document.
+
+Row 3 is the contribution: *the published 96.06% depends on speaker leakage; under
+actor-independent evaluation the same architecture gets Y%.* A reproduction that finds a
+methodological flaw is stronger than a tuning delta, and it survives a reviewer running the
+obvious check.
+
+Row 1 is **cited from the committed notebook outputs, not re-run** — those numbers already exist.
+Row 2 supersedes the earlier plan to cite-only, because it answers a question citation cannot.
 
 **Fusion features become out-of-fold (standard stacking).** Inner 2-fold GroupKFold over the
 training actors produces clean features for every training clip; base models retrained on the full
@@ -144,9 +160,15 @@ portion — applying it first would synthesize training points by interpolating 
 | file | role |
 |---|---|
 | `src/cache_faces.py` | one-time face extraction → uint8 cache (Kaggle, CPU) |
-| `src/train_actor_independent.py` | the protocol above (Kaggle, GPU) |
+| `src/paper_protocol.py` | row 2 — paper's protocol + the two fixes (Kaggle, GPU) |
+| `src/train_actor_independent.py` | row 3 — the protocol above (Kaggle, GPU) |
 | `src/analyze_binary_mapping.py` | post-hoc binary mapping over saved predictions |
 | `results/` | fold results, summary, per-sample out-of-fold predictions |
+
+Heavy compute lives in scripts, not notebooks: `.ipynb` diffs are unreadable JSON, which is why
+this repo's history is a series of opaque "Add files via upload" commits against one 138 KB file.
+Presentation belongs in a notebook that loads the saved CSVs — it re-runs in seconds because the
+4-hour compute already happened.
 
 The face cache stores **uint8 raw crops**, not the original's float32-with-normalization-baked-in.
 It is 4× smaller (~1.5 GB vs ~5.9 GB) and keeps normalization a free parameter, so changing it
