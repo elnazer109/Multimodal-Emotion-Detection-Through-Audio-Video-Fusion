@@ -11,14 +11,20 @@ from. Where a claim did not survive checking, it is marked as withdrawn rather t
 
 ## 1. The published benchmark measures actor identity
 
-The paper reports **96.06%** fusion accuracy (Table VII). Under actor-independent evaluation the
-same architecture scores **62.98%**.
+The paper reports **96.06%** fusion accuracy (Table VII). Under actor-independent evaluation — the
+same architecture, the same data, but with the people in the test fold never seen during training —
+it scores far less:
 
-| protocol | fusion | vs published |
-|---|---|---|
-| paper, Table VII (actors leak across folds) | **96.06** | — |
-| actor-independent, paper's fusion protocol | **62.98** ± 7.96 | **−33.08** |
-| actor-independent, out-of-fold fusion features | **50.25** ± 9.10 | **−45.81** |
+<!-- AUTO:HONEST -->
+| model | actor-independent | sd | vs paper's 96.06 |
+|---|---|---|---|
+| audio | **55.08** | 3.54 | -40.98 |
+| video | **45.43** | 12.56 | -50.63 |
+| **fusion** (paper's fusion protocol) | **62.98** | 7.96 | -33.08 |
+| **fusion** (out-of-fold features) | **50.25** | 9.10 | -45.81 |
+
+Holding out actors costs **33.08** points. The fusion-feature leak costs a further **12.73**, measured on identical held-out actors, so the two are separable and additive.
+<!-- /AUTO:HONEST -->
 
 **This is a flaw in the publication, not in anyone's implementation.** The paper's §F says:
 
@@ -96,14 +102,58 @@ nothing ever normalises the input.
 
 ## 3. What we changed, and what it cost or bought
 
-| arm | change | audio | video | fusion |
-|---|---|---|---|---|
-| paper (published) | — | 79.24 | **92.72** ± 3.05 | **96.06** |
-| notebook (committed) | — | 80.67 | **83.24** | 94.29 |
-| **kinetics** | Kinetics channel stats + scaler | 81.81 | 81.97 ± 8.11 | 93.84 |
-| **perclip** | per-clip norm restored + scaler | 81.73 | 78.25 ± 10.88 | 94.25 |
-| **refine** | + Fig. 4 on a real 2×7×7 volume | *running* | *running* | *running* |
-| **epochs** | + video 15 → 35 epochs | *queued* | *queued* | *queued* |
+All arms below run the **paper's own protocol** — its `StratifiedKFold(shuffle=True)` split, its
+max-over-epochs metric, its hyperparameters — so every row is directly comparable to Table VII.
+
+<!-- AUTO:HEADLINE -->
+| arm | what changed | audio | video | fusion | vs paper |
+|---|---|---|---|---|---|
+| **paper, Table VII** | *the bar* | 79.24 | 92.72 | **96.06** | — |
+| notebook, as committed | *never reproduced its own paper* | 80.67 | 83.24 | 94.29 | −1.77 |
+| **kinetics** | Kinetics channel stats + scaler | 81.81 | 81.97 | **93.84** |  -2.22 |
+| **per-clip** | per-clip norm + scaler | 81.73 | 78.25 | **94.25** |  -1.81 |
+| **+ Fig. 4** | per-clip + scaler + refine head on a real 2x7x7 volume | 81.16 | 92.62 | **95.84** |  -0.22 |
+<!-- /AUTO:HEADLINE -->
+
+Per-fold detail:
+
+<!-- AUTO:PERFOLD -->
+**kinetics**
+| fold | audio | video | fusion |
+|---|---|---|---|
+| 1 | 78.21 | 85.54 | 94.70 |
+| 2 | 82.28 | 88.80 | 94.91 |
+| 3 | 84.69 | 71.22 | 93.27 |
+| 4 | 80.20 | 88.78 | 91.22 |
+| 5 | 83.67 | 75.51 | 95.10 |
+| **mean** | 81.81 | 81.97 | 93.84 |
+| *sd* | 2.62 | 8.11 | 1.63 |
+
+
+**per-clip**
+| fold | audio | video | fusion |
+|---|---|---|---|
+| 1 | 80.45 | 82.48 | 94.70 |
+| 2 | 81.06 | 93.48 | 96.74 |
+| 3 | 84.69 | 79.39 | 95.71 |
+| 4 | 79.80 | 70.20 | 92.45 |
+| 5 | 82.65 | 65.71 | 91.63 |
+| **mean** | 81.73 | 78.25 | 94.25 |
+| *sd* | 1.96 | 10.88 | 2.16 |
+
+
+**+ Fig. 4**
+| fold | audio | video | fusion |
+|---|---|---|---|
+| 1 | 80.65 | 93.08 | 94.50 |
+| 2 | 80.65 | 92.06 | 97.35 |
+| 3 | 83.88 | 94.49 | 97.55 |
+| 4 | 74.08 | 91.43 | 94.08 |
+| 5 | 86.53 | 92.04 | 95.71 |
+| **mean** | 81.16 | 92.62 | 95.84 |
+| *sd* | 4.66 | 1.20 | 1.59 |
+
+<!-- /AUTO:PERFOLD -->
 
 ### The finding: one line of the notebook costs 9.4 points of video
 
