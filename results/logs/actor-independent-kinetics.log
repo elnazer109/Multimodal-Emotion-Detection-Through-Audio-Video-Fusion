@@ -1,0 +1,91 @@
+r3d_18 weights verified: sha256 b3b3357e... matches official checkpoint
+faces (2452, 16, 112, 112, 3) uint8 | pairs 2452 | actors 24
+resolved 2452 wavs
+mfcc (2452, 40, 130)
+===== fold 1/5 | train actors [1, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18, 20, 21, 22, 23] | test actors [2, 9, 14, 19, 24] | 1932/520 clips =====
+  inner half 1: fit 936 -> predict 996
+    f1h1/audio: early stop @ 17
+    f1h1/video: early stop @ 14
+  inner half 2: fit 996 -> predict 936
+    f1h2/audio: early stop @ 14
+  full-train base models
+    f1full/audio: early stop @ 24
+  audio          acc 58.85  bal 57.66  f1 58.67
+  video          acc 45.77  bal 46.72  f1 39.76
+  fusion-paper   acc 62.88  bal 59.38  f1 60.75
+  fusion-oof     acc 56.35  bal 53.75  f1 54.62
+===== fold 2/5 | train actors [1, 2, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 18, 19, 20, 21, 22, 24] | test actors [3, 4, 13, 17, 23] | 1932/520 clips =====
+  inner half 1: fit 936 -> predict 996
+    f2h1/audio: early stop @ 14
+  inner half 2: fit 996 -> predict 936
+    f2h2/audio: early stop @ 15
+  full-train base models
+    f2full/audio: early stop @ 25
+  audio          acc 49.62  bal 52.97  f1 49.51
+  video          acc 36.54  bal 40.62  f1 29.87
+  fusion-paper   acc 55.19  bal 57.03  f1 54.51
+  fusion-oof     acc 38.46  bal 45.78  f1 34.06
+===== fold 3/5 | train actors [2, 3, 4, 5, 6, 8, 9, 10, 11, 13, 14, 15, 17, 18, 19, 20, 21, 23, 24] | test actors [1, 7, 12, 16, 22] | 1932/520 clips =====
+  inner half 1: fit 936 -> predict 996
+    f3h1/audio: early stop @ 17
+    f3h1/video: early stop @ 15
+  inner half 2: fit 996 -> predict 936
+    f3h2/audio: early stop @ 16
+  full-train base models
+    f3full/audio: early stop @ 45
+    f3full/video: early stop @ 14
+  audio          acc 56.15  bal 56.56  f1 55.70
+  video          acc 33.65  bal 32.19  f1 20.89
+  fusion-paper   acc 65.77  bal 65.00  f1 65.91
+  fusion-oof     acc 44.62  bal 46.09  f1 42.04
+===== fold 4/5 | train actors [1, 2, 3, 4, 5, 7, 9, 10, 12, 13, 14, 15, 16, 17, 19, 20, 22, 23, 24] | test actors [6, 8, 11, 18, 21] | 1976/476 clips =====
+  inner half 1: fit 936 -> predict 1040
+    f4h1/audio: early stop @ 15
+  inner half 2: fit 1040 -> predict 936
+    f4h2/audio: early stop @ 15
+  full-train base models
+    f4full/audio: early stop @ 38
+  audio          acc 56.93  bal 57.64  f1 56.44
+  video          acc 65.76  bal 66.42  f1 64.80
+  fusion-paper   acc 74.79  bal 75.00  f1 75.28
+  fusion-oof     acc 61.34  bal 57.64  f1 56.34
+===== fold 5/5 | train actors [1, 2, 3, 4, 6, 7, 8, 9, 11, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 24] | test actors [5, 10, 15, 20] | 2036/416 clips =====
+  inner half 1: fit 996 -> predict 1040
+    f5h1/audio: early stop @ 16
+    f5h1/video: early stop @ 13
+  inner half 2: fit 1040 -> predict 996
+    f5h2/audio: early stop @ 26
+  full-train base models
+    f5full/audio: early stop @ 32
+  audio          acc 53.85  bal 52.73  f1 52.44
+  video          acc 45.43  bal 46.09  f1 44.14
+  fusion-paper   acc 56.25  bal 54.88  f1 54.74
+  fusion-oof     acc 50.48  bal 49.61  f1 46.87
+=================== ACTOR-INDEPENDENT (GroupKFold by actor) ===================
+             accuracy        balanced_accuracy            f1
+                 mean    std              mean    std   mean    std
+model
+audio           55.08   3.54             55.51   2.47  54.55   3.59
+fusion-oof      50.25   9.10             50.57   5.10  46.79   9.18
+fusion-paper    62.98   7.96             62.26   8.06  62.24   8.68
+video           45.43  12.56             46.41  12.61  39.89  16.58
+Paper's reported fusion accuracy under the leaky random split: 94.29% (not re-run; cited from the committed notebook outputs)
+The fusion-paper vs fusion-oof gap is the value of the fusion-feature leak alone,
+measured on identical held-out actors.
+fusion-oof confusion matrix (rows=true):
+           neutral  calm  happy  sad  angry  fearful  disgust  surprised
+neutral        102    45      5    7      5        4        9         11
+calm            16   261     33   18      5        5       32          6
+happy            9    79    139    9     21       43       27         49
+sad             18    59      5  176      5       51       45         17
+angry            0     2     30   12    210       25       82         15
+fearful          3     8     13   87     73      142       23         27
+disgust          2     8      7   23     14        7      122          9
+surprised        0     4      3   16     42       17       35         75
+wrote 2452 per-sample predictions -> oof_predictions.csv
+/usr/local/lib/python3.12/dist-packages/mistune.py:435: SyntaxWarning: invalid escape sequence '\|'
+  cells[i][c] = re.sub('\\\\\|', '|', cell)
+/usr/local/lib/python3.12/dist-packages/nbconvert/filters/filter_links.py:36: SyntaxWarning: invalid escape sequence '\_'
+  text = re.sub(r'_', '\_', text) # Escape underscores in display text
+[NbConvertApp] Converting notebook __script__.ipynb to html
+[NbConvertApp] Writing 403720 bytes to __results__.html
