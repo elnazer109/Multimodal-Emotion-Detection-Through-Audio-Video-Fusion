@@ -30,25 +30,27 @@ normalization change (which hurt).
 
 Target: the PAPER's Table VII mean of 96.06% (audio 79.24 / video 92.72).
 
-THIRD change: train on the SPEECH subset only (1,440 clips), not speech+song (2,452).
+THIRD change: video_epochs 15 -> 35.
 
-Paper Sec. VI.6: "The dataset has 1,360 distinct samples, each with both an audio and video
-recording." RAVDESS pairs to 2,452 = 1,440 speech + 1,012 song, or 1,440 speech-only. Neither
-equals 1,360, so the paper's accounting does not reconcile with the dataset's actual structure --
-but 1,440 is far closer than 2,452, and the notebook's 2,452 is demonstrably NOT the paper's data.
+The paper never states its epoch counts. The notebook chose 15, and its own committed fold-1 log
+shows the video model was still improving when it stopped:
 
-Song is not merely "more data". It is a different domain:
-  - actors SING rather than speak, so facial dynamics are dominated by sustained vowels and open
-    mouth shapes rather than by emotional expression;
-  - song covers only 6 emotions -- there is no disgust and no surprised at all;
-  - so in the 2,452-clip set those two classes are half-size (192 vs 376) and speech-only, which
-    makes the 8-way problem lopsided in a way the paper never had to handle.
+    epoch 13 | train loss 0.236 acc 93.42 | val loss 0.865 acc 77.80
+    epoch 14 | train loss 0.239 acc 93.83 | val loss 0.396 acc 90.02
+    epoch 15 | train loss 0.139 acc 96.74 | val loss 0.390 acc 91.24   <- stopped here, still rising
 
-Verified against the data: speech 1,440 = 24 actors x 60 trials; song 1,012 = 23 x 44 (actor 18
-recorded no song). Those two reproduce all eight RAVDESS class counts exactly.
+Validation accuracy climbed 90.02 -> 91.24 on the final epoch and validation loss was still
+falling. 15 is where the notebook's author stopped, not where the model converged -- and video is
+exactly where our deficit sits (paper 92.72).
 
-This arm is the honest reading of "reproduce the paper": match its data scale as closely as the
-dataset allows. The 1,360 vs 1,440 gap is unexplained and is reported as such.
+Early stopping on validation loss (patience 10) still governs, and the reported checkpoint is
+still max-val-accuracy, so the extra epochs are taken only if they earn it.
+
+HONESTY NOTE, to carry into the paper: the metric here is the paper's own max-over-epochs
+validation accuracy, which mechanically rewards more epochs -- more draws, higher maximum, even
+from noise alone. So a like-for-like claim against Table VII assumes the paper's epoch count, which
+it never published. This arm is therefore reported WITH that caveat, and the perclip/refine arms
+(both at the notebook's 15) remain the clean comparisons.
 
 SECOND change vs the notebook: the refine head now sees a real spatiotemporal volume.
 
@@ -126,7 +128,7 @@ CFG = dict(
     audio_lr=5e-4, audio_batch=16, audio_epochs=100, audio_dropout_lstm=0.4,
     audio_dropout_dense=0.3, audio_l2=1e-2,
     n_frames=16, img_size=112,
-    video_lr=1e-4, video_batch=32, video_epochs=15, video_dropout=0.4,
+    video_lr=1e-4, video_batch=32, video_epochs=35, video_dropout=0.4,  # 15 -> 35; see header
     fusion_lr=5e-4, fusion_epochs=1000, fusion_dropout=0.5, fusion_wd=1e-5,
     fusion_step_size=100, fusion_gamma=0.5,
     n_classes=8, n_folds=5, early_stop_patience=10,
@@ -367,15 +369,7 @@ def features(idx, am, vm):
 rows = []
 skf = StratifiedKFold(n_splits=CFG["n_folds"], shuffle=True, random_state=SEED)  # the paper's split
 
-# Speech-only pool. Indices stay global (into FACES/MFCC/LABELS); only the candidate set shrinks.
-POOL = np.where(pairs.vocal_channel_a.values == 1)[0]
-assert len(POOL) == 1440, f"expected 1440 speech clips, got {len(POOL)}"
-print(f"speech-only pool: {len(POOL)} clips | actors {pairs.actor.iloc[POOL].nunique()} | "
-      f"paper claims 1360 (unreconciled)", flush=True)
-print("class counts:", pairs.emotion_label.iloc[POOL].value_counts().to_dict(), flush=True)
-
-for fold, (tr_pos, va_pos) in enumerate(skf.split(POOL, LABELS[POOL]), 1):
-    tr, va = POOL[tr_pos], POOL[va_pos]
+for fold, (tr, va) in enumerate(skf.split(pairs, LABELS), 1):
     shared = len(set(pairs.actor.iloc[tr]) & set(pairs.actor.iloc[va]))
     print(f"\n===== fold {fold}/5 | {len(tr)}/{len(va)} clips | "
           f"actors in BOTH train and val: {shared}/24  <-- this is the leak =====", flush=True)
@@ -432,10 +426,10 @@ for fold, (tr_pos, va_pos) in enumerate(skf.split(POOL, LABELS[POOL]), 1):
     rows.append(dict(fold=fold, model="fusion", **metrics(yva, best_pred)))
     print(f"  fold {fold} fusion best val acc: {best_acc:.2f}%   (paper fold target ~94-96%)",
           flush=True)
-    pd.DataFrame(rows).to_csv(os.path.join(OUT, "paper_speech_folds.csv"), index=False)
+    pd.DataFrame(rows).to_csv(os.path.join(OUT, "paper_epochs_folds.csv"), index=False)
 
 df = pd.DataFrame(rows)
-print("\n\n== SPEECH-ONLY (1440, the paper scale) + per-clip + scaler + refine head ==")
+print("\n\n== per-clip + scaler + refine head + video 35 epochs (metric caveat: see header) ==")
 print(df.groupby("model")["accuracy"].agg(["mean", "std"]).round(2).to_string())
 mean = df[df.model == "fusion"]["accuracy"].mean()
 print(f"\nfusion mean: {mean:.2f}%   |   paper reported: 94.29%   |   delta: {mean - 94.29:+.2f}")
@@ -443,4 +437,4 @@ print("\nThis number is comparable to 94.29% -- same split, same metric, same hy
 print("It says the published architecture implemented correctly does better on the published")
 print("benchmark. It does NOT say the model reads emotion better: actors still leak across these")
 print("folds. For that claim see the actor-independent arm.")
-df.to_csv(os.path.join(OUT, "paper_speech_folds.csv"), index=False)
+df.to_csv(os.path.join(OUT, "paper_epochs_folds.csv"), index=False)
