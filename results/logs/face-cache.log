@@ -1,0 +1,16 @@
+ROOT: /kaggle/input/datasets/orvile/ravdess-dataset
+found 2452 audio, 4904 video
+video keys matching >1 file: 2452 / 2452
+paired clips: 2452
+{1: 1440, 2: 1012}
+{'calm': 376, 'happy': 376, 'sad': 376, 'angry': 376, 'fearful': 376, 'disgust': 192, 'surprised': 192, 'neutral': 188}
+clips with zero face detections: 0 / 2452
+mean faces found per clip: 15.66 / 16
+decode errors: 0
+cache: 1.48 GB
+/usr/local/lib/python3.12/dist-packages/mistune.py:435: SyntaxWarning: invalid escape sequence '\|'
+  cells[i][c] = re.sub('\\\\\|', '|', cell)
+/usr/local/lib/python3.12/dist-packages/nbconvert/filters/filter_links.py:36: SyntaxWarning: invalid escape sequence '\_'
+  text = re.sub(r'_', '\_', text) # Escape underscores in display text
+[NbConvertApp] Converting notebook __script__.ipynb to html
+[NbConvertApp] Writing 310434 bytes to __results__.html

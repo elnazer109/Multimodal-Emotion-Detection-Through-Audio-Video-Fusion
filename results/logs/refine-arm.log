@@ -1,0 +1,45 @@
+GPU: Tesla T4  sm_75  torch 2.10.0+cu128
+GPU verified: a real kernel launched and returned.
+r3d_18 weights verified: sha256 b3b3357e... matches official
+===== fold 1/5 | 1961/491 clips | actors in BOTH train and val: 24/24  <-- this is the leak =====
+    f1/audio: early stop @ 62
+    f1/audio: best val acc 80.65
+    f1/video: best val acc 93.08
+  fold 1 fusion best val acc: 94.50%   (paper fold target ~94-96%)
+===== fold 2/5 | 1961/491 clips | actors in BOTH train and val: 24/24  <-- this is the leak =====
+    f2/audio: early stop @ 58
+    f2/audio: best val acc 80.65
+    f2/video: best val acc 92.06
+  fold 2 fusion best val acc: 97.35%   (paper fold target ~94-96%)
+===== fold 3/5 | 1962/490 clips | actors in BOTH train and val: 24/24  <-- this is the leak =====
+    f3/audio: early stop @ 55
+    f3/audio: best val acc 83.88
+    f3/video: best val acc 94.49
+  fold 3 fusion best val acc: 97.55%   (paper fold target ~94-96%)
+===== fold 4/5 | 1962/490 clips | actors in BOTH train and val: 24/24  <-- this is the leak =====
+    f4/audio: early stop @ 55
+    f4/audio: best val acc 74.08
+    f4/video: best val acc 91.43
+  fold 4 fusion best val acc: 94.08%   (paper fold target ~94-96%)
+===== fold 5/5 | 1962/490 clips | actors in BOTH train and val: 24/24  <-- this is the leak =====
+    f5/audio: early stop @ 80
+    f5/audio: best val acc 86.53
+    f5/video: best val acc 92.04
+  fold 5 fusion best val acc: 95.71%   (paper fold target ~94-96%)
+== PAPER PROTOCOL + per-clip norm + StandardScaler + refine head on a REAL volume ==
+         mean   std
+model
+audio   81.16  4.66
+fusion  95.84  1.59
+video   92.62  1.20
+fusion mean: 95.84%   |   paper reported: 94.29%   |   delta: +1.55
+This number is comparable to 94.29% -- same split, same metric, same hyperparameters.
+It says the published architecture implemented correctly does better on the published
+benchmark. It does NOT say the model reads emotion better: actors still leak across these
+folds. For that claim see the actor-independent arm.
+/usr/local/lib/python3.12/dist-packages/mistune.py:435: SyntaxWarning: invalid escape sequence '\|'
+  cells[i][c] = re.sub('\\\\\|', '|', cell)
+/usr/local/lib/python3.12/dist-packages/nbconvert/filters/filter_links.py:36: SyntaxWarning: invalid escape sequence '\_'
+  text = re.sub(r'_', '\_', text) # Escape underscores in display text
+[NbConvertApp] Converting notebook __script__.ipynb to html
+[NbConvertApp] Writing 383268 bytes to __results__.html

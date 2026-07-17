@@ -1,0 +1,43 @@
+r3d_18 weights verified: sha256 b3b3357e... matches official
+===== fold 1/5 | 1961/491 clips | actors in BOTH train and val: 24/24  <-- this is the leak =====
+    f1/audio: early stop @ 48
+    f1/audio: best val acc 78.21
+    f1/video: best val acc 85.54
+  fold 1 fusion best val acc: 94.70%   (paper fold target ~94-96%)
+===== fold 2/5 | 1961/491 clips | actors in BOTH train and val: 24/24  <-- this is the leak =====
+    f2/audio: early stop @ 56
+    f2/audio: best val acc 82.28
+    f2/video: best val acc 88.80
+  fold 2 fusion best val acc: 94.91%   (paper fold target ~94-96%)
+===== fold 3/5 | 1962/490 clips | actors in BOTH train and val: 24/24  <-- this is the leak =====
+    f3/audio: early stop @ 60
+    f3/audio: best val acc 84.69
+    f3/video: best val acc 71.22
+  fold 3 fusion best val acc: 93.27%   (paper fold target ~94-96%)
+===== fold 4/5 | 1962/490 clips | actors in BOTH train and val: 24/24  <-- this is the leak =====
+    f4/audio: early stop @ 91
+    f4/audio: best val acc 80.20
+    f4/video: best val acc 88.78
+  fold 4 fusion best val acc: 91.22%   (paper fold target ~94-96%)
+===== fold 5/5 | 1962/490 clips | actors in BOTH train and val: 24/24  <-- this is the leak =====
+    f5/audio: early stop @ 52
+    f5/audio: best val acc 83.67
+    f5/video: best val acc 75.51
+  fold 5 fusion best val acc: 95.10%   (paper fold target ~94-96%)
+============ PAPER PROTOCOL (StratifiedKFold, leaky) + our two fixes ============
+         mean   std
+model
+audio   81.81  2.63
+fusion  93.84  1.63
+video   81.97  8.11
+fusion mean: 93.84%   |   paper reported: 94.29%   |   delta: -0.45
+This number is comparable to 94.29% -- same split, same metric, same hyperparameters.
+It says the published architecture implemented correctly does better on the published
+benchmark. It does NOT say the model reads emotion better: actors still leak across these
+folds. For that claim see the actor-independent arm.
+/usr/local/lib/python3.12/dist-packages/mistune.py:435: SyntaxWarning: invalid escape sequence '\|'
+  cells[i][c] = re.sub('\\\\\|', '|', cell)
+/usr/local/lib/python3.12/dist-packages/nbconvert/filters/filter_links.py:36: SyntaxWarning: invalid escape sequence '\_'
+  text = re.sub(r'_', '\_', text) # Escape underscores in display text
+[NbConvertApp] Converting notebook __script__.ipynb to html
+[NbConvertApp] Writing 376112 bytes to __results__.html
