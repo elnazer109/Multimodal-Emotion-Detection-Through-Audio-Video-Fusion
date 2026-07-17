@@ -44,8 +44,39 @@ def sh(cmd):
     return subprocess.run(cmd, shell=True, capture_output=True, text=True, env=env)
 
 
+def save_log(kernel, name):
+    """Decode a kernel log to plain text and keep it as evidence.
+
+    Logs are pulled and committed because they are the primary record: per-epoch traces, per-fold
+    early-stop points, the sha256 check on the pretrained weights, and the line that prints
+    "actors in BOTH train and val: 24/24". They are also PERISHABLE -- re-pushing a kernel makes
+    `kernels output` return the new version, so an earlier run's log becomes unrecoverable. One was
+    nearly lost that way.
+    """
+    logs = os.path.join(REPO, "results", "logs")
+    os.makedirs(logs, exist_ok=True)
+    tmp = os.path.join(logs, "_raw")
+    os.makedirs(tmp, exist_ok=True)
+    sh(f'python -m kaggle kernels output cubeis/{kernel} -p "{tmp}" --file-pattern ".*\\.log" -o')
+    src = glob.glob(os.path.join(tmp, "*.log"))
+    if not src:
+        return
+    import json
+    try:
+        d = json.load(open(src[0], encoding="utf-8"))
+    except Exception:
+        return
+    lines = [e.get("data", "") for e in (d if isinstance(d, list) else d.get("log", []))]
+    keep = [l.rstrip() for l in lines
+            if l.strip() and "it/s]" not in l and "?it/s" not in l and "s/it]" not in l]
+    open(os.path.join(logs, f"{name}.log"), "w", encoding="utf-8").write("\n".join(keep) + "\n")
+    for f in src:
+        os.remove(f)
+    print(f"  {'':28} log -> results/logs/{name}.log ({len(keep)} lines)")
+
+
 def pull(kernel, subdir):
-    """Pull only CSVs -- never the 1.5GB face cache onto a laptop."""
+    """Pull only CSVs and the log -- never the 1.5GB face cache onto a laptop."""
     d = os.path.join(REPO, "results", subdir)
     os.makedirs(d, exist_ok=True)
     r = sh(f'python -m kaggle kernels status cubeis/{kernel}')
@@ -55,6 +86,7 @@ def pull(kernel, subdir):
         return False
     sh(f'python -m kaggle kernels output cubeis/{kernel} -p "{d}" --file-pattern ".*\\.csv" -o')
     print(f"  {kernel:28} pulled -> results/{subdir}/")
+    save_log(kernel, subdir)
     return True
 
 
