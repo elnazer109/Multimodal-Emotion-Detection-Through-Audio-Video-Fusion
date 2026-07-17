@@ -18,12 +18,12 @@ it scores far less:
 <!-- AUTO:HONEST -->
 | model | actor-independent | sd | vs paper's 96.06 |
 |---|---|---|---|
-| audio | **55.08** | 3.54 | -40.98 |
-| video | **45.43** | 12.56 | -50.63 |
-| **fusion** (paper's fusion protocol) | **62.98** | 7.96 | -33.08 |
-| **fusion** (out-of-fold features) | **50.25** | 9.10 | -45.81 |
+| audio | **54.51** | 4.48 | -41.55 |
+| video | **45.35** | 16.54 | -50.71 |
+| **fusion** (paper's fusion protocol) | **64.10** | 6.71 | -31.96 |
+| **fusion** (out-of-fold features) | **48.15** | 9.26 | -47.91 |
 
-Holding out actors costs **33.08** points. The fusion-feature leak costs a further **12.73**, measured on identical held-out actors, so the two are separable and additive.
+Holding out actors costs **31.96** points. The fusion-feature leak costs a further **15.95**, measured on identical held-out actors, so the two are separable and additive.
 <!-- /AUTO:HONEST -->
 
 **This is a flaw in the publication, not in anyone's implementation.** The paper's §F says:
