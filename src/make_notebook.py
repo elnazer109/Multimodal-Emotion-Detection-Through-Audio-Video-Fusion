@@ -5,20 +5,29 @@ import json, sys
 MD, CODE = "markdown", "code"
 
 CELLS = [
-(MD, r"""# Actor-independent re-evaluation — results
+(MD, r"""# Emotion Unlocked — reproduction, correction, and an honest re-evaluation
 
-Loads the CSVs written by `src/paper_protocol.py` and `src/train_actor_independent.py`.
-No training happens here: the ~4 hours of compute already ran on Kaggle, so this notebook
+Loads the CSVs the Kaggle runs wrote. No training happens here — the compute already ran, so this
 re-executes in seconds.
 
-**Three rows, answering two different questions.** Collapsing them into one number is what
-produced the problem this work documents.
+**Two questions, deliberately kept apart.** Collapsing them into one number is what produced the
+problem this work documents.
 
-| # | protocol | question |
+| question | protocol | answered by |
 |---|---|---|
-| 1 | paper's split, paper's code (cited) | the published claim |
-| 2 | paper's split, our two fixes | *did we improve the published architecture?* |
-| 3 | actor-independent, our fixes | *does it read emotion at all?* |
+| *Did we improve the published architecture?* | the paper's own split | the arms below, vs **96.06%** |
+| *Does it read emotion from an unseen person?* | actor-independent GroupKFold | the honest section |
+
+Two things the paper's own text establishes, both load-bearing:
+
+1. **§F Cross-Validation Strategy** — *"the database is split into five subsets… four for
+   training, one for validation."* Split into subsets **of samples**, with no mention of actors or
+   speakers. RAVDESS has only 24 actors delivering two fixed sentences, each recorded twice — so
+   repetition 1 trains while repetition 2 validates: same face, same voice, same sentence. **The
+   leak is in the publication, not just in the notebook.**
+2. **§VI.6** — *"The dataset has 1,360 distinct samples."* RAVDESS pairs to 2,452 (1,440 speech +
+   1,012 song), or 1,440 speech-only. **Neither is 1,360**, and the notebook trains on 2,452 —
+   including the song subset, which contains no *disgust* or *surprised* at all.
 """),
 
 (CODE, r"""import glob, os
@@ -31,54 +40,99 @@ def find(name):
     hits = glob.glob(f"results/**/{name}", recursive=True) + glob.glob(f"**/{name}", recursive=True)
     return hits[0] if hits else None
 
-PAPER_REPORTED = 94.29   # from the committed notebook outputs; not re-run
+# The PAPER's Table VII -- read from video paper.pdf, not from the notebook's outputs.
+# The notebook scored 94.29 and never reproduced its own paper, falling 1.77 short.
+PAPER = {"audio": 79.24, "video": 92.72, "fusion": 96.06}
+NOTEBOOK_FUSION = 94.29
+PAPER_FOLDS = pd.DataFrame({
+    "fold":   [1, 2, 3, 4, 5],
+    "audio":  [78.8, 80.6, 77.4, 79.8, 79.6],
+    "video":  [93.0, 91.9, 93.7, 96.6, 88.2],
+    "fusion": [95.6, 97.6, 97.2, 95.3, 94.6],
+})
 
-paper = pd.read_csv(find("paper_protocol_folds.csv")) if find("paper_protocol_folds.csv") else None
+RUNS = {  # arm -> its fold-results csv
+    "kinetics (regression)": "paper_protocol_folds.csv",
+    "per-clip + scaler":     "paper_perclip_folds.csv",
+    "+ refine head":         "paper_refine_folds.csv",
+}
+arms = {k: pd.read_csv(find(v)) for k, v in RUNS.items() if find(v)}
 folds = pd.read_csv(find("fold_results.csv")) if find("fold_results.csv") else None
 preds = pd.read_csv(find("oof_predictions.csv")) if find("oof_predictions.csv") else None
 
-for n, d in [("paper_protocol_folds", paper), ("fold_results", folds), ("oof_predictions", preds)]:
-    print(f"{n:22} {'MISSING' if d is None else str(d.shape)}")"""),
+print("paper Table VII:", PAPER)
+for k in RUNS:
+    print(f"{k:24} {'MISSING' if k not in arms else str(arms[k].shape)}")
+print(f"{'fold_results (honest)':24} {'MISSING' if folds is None else str(folds.shape)}")
+print(f"{'oof_predictions':24} {'MISSING' if preds is None else str(preds.shape)}")"""),
 
 (MD, r"""## The headline
 
-Row 2 is the "beat the paper" number: **same split, same metric, same hyperparameters** — only
-the two implementation fixes differ (Kinetics normalization matching the pretrained weights, and
-a StandardScaler on the fused vector). It is directly comparable to 94.29%.
+All arms below use the **paper's own protocol**: `StratifiedKFold(shuffle=True)`, its
+max-over-epochs metric, its hyperparameters. So they are directly comparable to Table VII's
+**96.06%**.
 
-Row 3 is the contribution. It is **not** comparable to rows 1–2 and is not supposed to be: it
-answers a harder question."""),
+Note the target. `94.29%` is what the *notebook* scored — it never reproduced its own paper,
+falling 1.77 short. The bar is 96.06."""),
 
-(CODE, r"""rows = [dict(protocol="1. paper split, paper code (cited)", fusion=PAPER_REPORTED, comparable_to_paper="yes")]
+(CODE, r"""rows = [
+    dict(arm="paper, Table VII (published)", **PAPER, note="the bar"),
+    dict(arm="notebook, as committed", fusion=NOTEBOOK_FUSION,
+         note="never reproduced its own paper: -1.77"),
+]
+for name, d in arms.items():
+    piv = d.pivot_table(index="fold", columns="model", values="accuracy")
+    r = dict(arm=name, note="")
+    for m in ["audio", "video", "fusion"]:
+        if m in piv:
+            r[m] = round(piv[m].mean(), 2)
+    if "fusion" in r:
+        r["note"] = f"vs paper {r['fusion'] - PAPER['fusion']:+.2f}"
+    rows.append(r)
 
-if paper is not None:
-    m = paper[paper.model == "fusion"]["accuracy"]
-    rows.append(dict(protocol="2. paper split, our fixes", fusion=round(m.mean(), 2),
-                     std=round(m.std(), 2), comparable_to_paper="yes",
-                     delta_vs_paper=round(m.mean() - PAPER_REPORTED, 2)))
+t = pd.DataFrame(rows)[["arm", "audio", "video", "fusion", "note"]]
+display(t.fillna("").style.hide(axis="index")
+         .set_caption("all rows on the paper's protocol -> comparable to 96.06"))
 
-if folds is not None:
-    for name, label in [("fusion-paper", "3a. actor-independent, paper's fusion features"),
-                        ("fusion-oof", "3b. actor-independent, out-of-fold fusion features")]:
-        m = folds[folds.model == name]["accuracy"]
-        if len(m):
-            rows.append(dict(protocol=label, fusion=round(m.mean(), 2), std=round(m.std(), 2),
-                             comparable_to_paper="NO -- different task"))
+for name, d in arms.items():
+    f = d[d.model == "fusion"]["accuracy"]
+    if len(f) == 5:
+        verdict = "BEATS THE PAPER" if f.mean() > PAPER["fusion"] else "short of the paper"
+        print(f"{name:24} fusion {f.mean():6.2f} +-{f.std():.2f}   -> {verdict}")"""),
 
-display(pd.DataFrame(rows).fillna(""))"""),
+(MD, r"""### What the arms mean
 
-(MD, r"""### Reading this table
+- **kinetics** — replaced the paper's per-clip video standardization with Kinetics channel stats,
+  on the theory that the original "fights" the pretrained weights. **A regression**: video fell to
+  ~82 (std 8.11, folds ranging 71→89) and fusion landed *below* even the notebook. The theory was
+  backwards — per-clip standardization removes lighting/contrast variation, and RAVDESS records
+  each actor under consistent studio conditions.
+- **per-clip + scaler** — the paper's normalization restored, keeping only the StandardScaler on
+  the 568-dim fused vector (raw MFCC means sit near −300 beside 0–1 softmax probabilities, and
+  `FusionMLP`'s first BatchNorm is *after* the first Linear, so nothing normalized the input).
+- **+ refine head** — additionally implements the paper's Fig. 4. Sec. VII.2 specifies
+  r3d_18 → stacked 3D convs → global average pooling. The notebook slices `children()[:-1]`,
+  keeping r3d_18's own avgpool, so the volume is already 1×1×1 and each 3×3×3 conv degenerates to
+  its centre tap. Slicing `[:-2]` emits (B,512,2,7,7) and the convs do real spatiotemporal work.
 
-- **Row 2 vs row 1** — whether the published architecture, implemented correctly, does better on
-  the published benchmark. A legitimate improvement claim.
-- **Row 2 vs row 3** — the size of the actor-leakage effect. Actors appear in both train and
-  validation in rows 1–2; in row 3 they never do.
-- **Row 3a vs row 3b** — the fusion-feature leak in isolation, on identical held-out actors. 3a
-  trains the fusion MLP on features from models that memorized those clips (the paper's protocol);
-  3b uses out-of-fold features.
+Every arm still has **actors leaking across folds** — that's the paper's protocol, kept
+deliberately so the comparison is like-for-like. None of these numbers says the model reads
+emotion from an unseen person. That question is below."""),
 
-Row 2 does **not** say the model reads emotion better. Actors still leak across those folds.
-Only row 3 speaks to generalization."""),
+(CODE, r"""# per-fold against the paper's own Table VII
+for name, d in arms.items():
+    piv = d.pivot_table(index="fold", columns="model", values="accuracy").round(2)
+    cmp = piv.join(PAPER_FOLDS.set_index("fold"), rsuffix="_paper")
+    for m in ["audio", "video", "fusion"]:
+        if m in piv:
+            cmp[f"{m}_delta"] = (piv[m] - PAPER_FOLDS.set_index("fold")[m]).round(2)
+    print(f"--- {name} vs paper Table VII, per fold ---")
+    display(cmp[[c for c in cmp.columns if "delta" in c or c in ("audio","video","fusion")]])"""),
+
+(MD, """## The honest number
+
+Everything above lets actors leak. This is what the same architecture scores when the people in
+the test fold were never seen in training — the question the paper never asks."""),
 
 (CODE, r"""if folds is not None:
     piv = folds.pivot_table(index="model", values=["accuracy", "balanced_accuracy", "f1"],
@@ -86,7 +140,15 @@ Only row 3 speaks to generalization."""),
     print("actor-independent, per-model:")
     display(piv)
     print("\nper-fold (each fold = a disjoint set of held-out actors):")
-    display(folds.pivot_table(index="fold", columns="model", values="accuracy").round(2))"""),
+    display(folds.pivot_table(index="fold", columns="model", values="accuracy").round(2))
+    fo = folds[folds.model == "fusion-oof"]["accuracy"]
+    fp = folds[folds.model == "fusion-paper"]["accuracy"]
+    if len(fo):
+        print(f"\nactor-independent fusion (out-of-fold features): {fo.mean():.2f}")
+        print(f"paper's headline, actors leaking:                 {PAPER['fusion']:.2f}")
+        print(f"cost of removing the leak:                        {fo.mean() - PAPER['fusion']:+.2f}")
+    if len(fo) and len(fp):
+        print(f"\nfusion-feature leak alone (same held-out actors):  {fp.mean() - fo.mean():+.2f}")"""),
 
 (MD, """## Where the errors go
 
@@ -182,17 +244,29 @@ accuracy."""),
 
 (MD, r"""## Caveats
 
-- **Row 1 was not re-run.** 94.29% is cited from the committed notebook outputs.
-- **`refine` head left untouched.** R3D-18's pooling already collapses the volume to 1×1×1 before
-  those 3×3×3 convs run, so they act on padding and reduce to their centre taps — wasting 26/27 of
-  their parameters. Cell 21's own comment shows this was deliberate, so it is a documented
-  deviation from the paper's Fig. 4, not a bug. Fixing it is an architecture change needing
-  re-tuning, and the budget was one run.
+- **The bar is the PAPER's 96.06%, not the notebook's 94.29%.** Table VII of `video paper.pdf`
+  reports audio 79.24 / video 92.72 / fusion 96.06. The committed notebook scores 94.29, so it
+  never reproduced its own paper. Earlier drafts of this work benchmarked against 94.29 by mistake.
+- **The paper's own sample count does not reconcile.** Sec. VI.6 states "1,360 distinct samples,
+  each with both an audio and video recording". RAVDESS pairs to 2,452 (1,440 speech + 1,012 song),
+  or 1,440 speech-only. Neither is 1,360. The notebook trains on 2,452 — including the song subset,
+  which contains no disgust or surprised at all — so it is not training on the paper's data.
+- **The paper's Fig. 4 is not implemented by the notebook.** Sec. VII.2 specifies stacked 3D convs
+  *then* global average pooling; the notebook pools first, so the convs act on a 1×1×1 volume and
+  degenerate to their centre taps. Cell 21's comment shows the author knew and chose it anyway.
+  The `+ refine head` arm implements the paper as written for the first time.
+- **The paper does not state its epoch counts.** The notebook uses 15 for video, and its fold-1 log
+  shows validation accuracy still rising at epoch 15 (90.02 → 91.24), so video is plausibly
+  under-trained. Untested — the paper's max-over-epochs metric rewards longer training, so a fair
+  comparison would need the epoch count the paper never published.
 - **Out-of-fold features use inner 2-fold**, not full nested CV — the affordable approximation.
   Train features come from models trained on half the training actors; test features from models
   retrained on all of them (standard stacking, as `sklearn`'s `StackingClassifier` does).
 - **The key-collision fix is cosmetic.** Every video key matched 2 files (2452/2452 confirmed), but
   the 01 and 02 copies are the same footage, so it buys determinism, not accuracy.
+- **The metric is the paper's**: max-over-epochs accuracy on the very fold being reported. It is
+  optimistic by construction. Kept anyway, because changing it would make the comparison to Table
+  VII meaningless — you cannot claim to beat a number you measured differently.
 - **No depression label exists in RAVDESS.** See above. The DAIC-WOZ fine-tune (real PHQ-8 labels)
   was cut for deadline; it needs a signed access agreement with days of lead time."""),
 ]
