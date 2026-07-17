@@ -1,0 +1,1091 @@
+
+=============== PAGE 1 ===============
+Emotion Unlocked: Multimodal Emotion Detection
+Through Audio-Video Fusion
+Dr. P. Vasuki
+Padhma Priya M
+Pooja V
+Associate Professor
+Student, IT Department
+Student, IT Department
+SSN College of Engineering
+SSN College of Engineering
+SSN College of Engineering
+Chennai, India
+Chennai, India
+Chennai, India
+vasukip@ssn.edu.in
+padhmapriya2110703@ssn.edu.in
+pooja2110067@ssn.edu.in
+Abstract—Emotion
+recognition
+is
+an
+important
+area
+of
+human-computer interaction with a wide range of applications
+in healthcare, customer experience optimization, and sentiment
+analysis. This paper presents a multimodal deep learning ar-
+chitecture that combines both audio and video modalities to
+improve emotion classification accuracy. The audio model takes
+Mel-Frequency Cepstral Coefficients (MFCCs) as input features,
+fed into a deep learning pipeline consisting of Convolutional
+Neural Networks (CNNs), Recurrent Neural Networks (RNNs),
+and Bidirectional Long Short-Term Memory (BiLSTM) layers
+to efficiently extract temporal dependencies from speech signals.
+In contrast, the video model utilizes a 3D Convolutional Neural
+Network (3D CNN) developed upon ResNet-18 to extract spatial-
+temporal features from video frames. The obtained audio
+and video feature representations are subsequently combined
+through a fully connected Multi-Layer Perceptron (MLP) that
+learns an optimal joint representation for final emotion classifi-
+cation. Through the exploitation of complementary information
+provided by each modality, the suggested multimodal strategy
+performs better than unimodal models, showing better emotion
+recognition accuracy and robustness on various cross-validation
+folds.
+Index Terms—Emotion Recognition, Multimodal Deep Learn-
+ing, Audio-Visual Fusion, CNN, RNN, BiLSTM, 3D CNN,
+ResNet-18, MFCC, MLP, Human-Computer Interaction, Sen-
+timent Analysis
+I. INTRODUCTION
+Emotion recognition has emerged as an important research
+field in affective computing, artificial intelligence, and human-
+computer interaction [1]. The capability to accurately analyze
+and interpret human emotions from audio and video infor-
+mation has a wide range of applications in various fields.
+In monitoring mental health, emotion recognition can help
+diagnose diseases like depression and anxiety by analyzing
+speech and facial expressions of patients. Emotion recognition
+in human-robot interaction increases the empathy response
+of robots, which then makes them useful in caregiving, edu-
+cation, and customer support. Autonomous systems such as
+intelligent assistants and driver monitoring systems also gain
+from emotion recognition through increased user experience
+and safety. Security and surveillance see the detection of emo-
+tional states contribute to threat recognition and prevention
+of crime. Moreover, emotional recognition is also extensively
+used in entertainment, game development, and advertising to
+customize user experience and maximize content delivery [3].
+Historical methods mainly used unimodal approaches that
+processed either voice or facial expressions separately [7].
+However, human emotions are multimodal and involve a
+complex combination of vocal tone, facial actions, and
+other non-verbal signals. Deep learning has greatly enhanced
+emotion recognition with its capability for extracting subtle
+patterns from audiovisual data. Despite these advancements,
+challenges such as variations in emotional expression, data
+skewness, and real-time computation limitations still necessi-
+tate further exploration of more efficient fusion methods and
+robust learning algorithms [2] [6].
+In this research, we aim to develop a multimodal emotion
+recognition system using deep learning methods. Specifically,
+we will use the RAVDESS dataset, which offers high-quality
+labeled audio-visual data, to train and test our models. Our ap-
+proach will integrate feature extraction techniques for speech
+and facial expressions, utilizing deep learning architectures to
+improve recognition accuracy. By leveraging fusion strategies,
+we seek to combine the strengths of each modality in a way
+that enhances the overall robustness and adaptability of the
+system. This work contributes to the growing field of affective
+computing by developing more accurate emotion classifica-
+tion models and addressing existing challenges related to real-
+world application and computational efficiency.
+Additionally, multimodal emotion recognition research is
+expanding beyond audiovisual analysis to incorporate physi-
+ological signals such as electroencephalography (EEG) and
+galvanic skin response (GSR) for a more comprehensive
+emotional understanding [15]. Advanced deep learning ar-
+chitectures like Adaptive Deep Belief Networks (DBNs) and
+multimodal data augmentation frameworks are being devel-
+oped to improve accuracy and data efficiency [14]. These
+recent advancements provide the motivation for our research,
+where we focus on optimizing feature fusion techniques
+and leveraging deep learning for robust multimodal emotion
+detection.
+II. LITERATURE SURVEY
+Emotion recognition has profoundly changed with the use
+of multimodal methods, using deep learning models and
+heterogeneous data for enhanced accuracy and resilience. In
+the early work, unimodal methods were mostly used, while
+This preprint research paper has not been peer reviewed. Electronic copy available at: https://ssrn.com/abstract=5274911
+Preprint not peer reviewed
+
+=============== PAGE 2 ===============
+contemporary studies focus on the fusion of audio and visual
+information for enhanced emotion classification [4].
+Han et al. proposed EmoBed in 2019, a method that
+enhances monomodal emotion recognition by capitalizing on
+crossmodal emotion embeddings [11]. EmoBed makes use of
+joint multimodal training and crossmodal learning to capture
+complementary information in auxiliary modalities. The paper
+showed that even if only a single modality is present at infer-
+ence time, EmoBed performs better than standard unimodal
+models by boosting feature representations learned at training.
+In 2021, Wang et al. introduced an adversarial learning-
+based multimedia emotion tagging method [12]. Their frame-
+work is composed of an emotion classifier and a discrim-
+inator, where the classifier outputs emotion labels, and the
+discriminator provides statistical similarity between predicted
+and ground truth labels. The framework effectively captured
+emotion distributions and enhanced accuracy in multimedia
+emotion tagging tasks.
+John and Kawanishi proposed a transformer-based multi-
+modal emotion recognition model in 2022 [5]. Their model
+utilized self-attention and cross-attention mechanisms to im-
+prove feature extraction in both audio and video modal-
+ities. Tested on the RAVDESS, CREMA-D, and SAVEE
+datasets, their system performed better than traditional CNN-
+LSTM architectures. Their work emphasized the capability
+of transformer models to learn long-range dependencies in
+multimodal data.
+In 2023, Deng and Ren created a Multi-label Emotion
+Detection Architecture (MEDA) [13]. MEDA uses a multi-
+channel emotion-specified feature extractor to separately pro-
+cess various emotions so that weaker emotions don’t get
+masked by stronger ones. Additionally, the research proposed
+an emotion correlation learner in order to learn the dependen-
+cies between the emotions, which resulted in better accuracy
+while detecting co-occurring emotions.
+Mocanu et al. (2023) introduced a cross-modal audio-
+video fusion technique that employed spatial, channel, and
+temporal attention mechanisms with deep metric learning [1].
+Their model achieved better performance on the RAVDESS
+and CREMA-D datasets with accuracy rates of 89.25% and
+84.57%, respectively. The authors highlighted the importance
+of attention-based feature extraction and cross-modal fusion
+in improving emotion classification. Their work also com-
+pared with state-of-the-art models and showed significant
+improvements.
+Kumar and Martin (2023) contrasted several deep learn-
+ing models for multimodal emotion recognition [8]. Their
+research compared several different fusion approaches, setting
+the supremacy of model-level fusion over decision- and
+feature-level fusion. Their work, tested on RAVDESS and
+IEMOCAP, showcased the prowess of deep learning models
+in achieving better multimodal emotion recognition accuracy.
+They also talked about challenges with real-time deployment
+and efficiency in computation and how to optimize deep
+learning models for large-scale deployment.
+Kamada and Ichimura presented in 2024 a multimodal
+Adaptive Deep Belief Network (DBN) for emotional recog-
+nition with the RAVDESS dataset [14]. The model adaptively
+changes its network topology by creating or annihilating
+neurons to enhance learning efficiency. The paper emphasized
+the benefits of adaptive multimodal fusion by using differ-
+ent weight adaptations for audio and video streams, which
+reached 89.94% accuracy.
+Li et al. (2025) addressed the problem of data shortages
+in multimodal emotion recognition by introducing a fusion-
+based data augmentation framework [15]. Their approach
+combines physiological signals with a ConvNeXt-Attention
+fusion model and uses a conditional self-attention GAN to
+synthesize more labeled data. The research showed that multi-
+modal dataset augmentation can greatly enhance classification
+performance, with performance exceeding 95% on benchmark
+datasets.
+Collectively, these studies verify that multimodal emotion
+recognition is superior to unimodal approaches. Through the
+use of attention mechanisms, transformer models, crossmodal
+fusion mechanisms, and data augmentation, researchers have
+been able to see significant improvements in accuracy. Yet,
+ongoing issues like domain adaptation, computational effi-
+ciency, dataset generalization, and deployment in the real
+world demonstrate the need for further progress towards
+pragmatic application [9] [10] .
+Fig. 1. Multimodal Emotion Recognition
+III. EMPIRICAL ANALYSIS
+This section presents a detailed evaluation of different
+deep learning models employed for emotion recognition.
+The performance of each model is analyzed based on three
+approaches: audio-based models, video-based models, and
+fusion-based models. The results highlight the impact of
+different architectures and feature extraction techniques on
+classification accuracy.
+1) Audio-Based Emotion Recognition: Emotion recogni-
+tion from speech signals requires a model that can capture
+both spectral and temporal features. Various architectures
+were tested, combining convolutional and recurrent layers
+This preprint research paper has not been peer reviewed. Electronic copy available at: https://ssrn.com/abstract=5274911
+Preprint not peer reviewed
+
+=============== PAGE 3 ===============
+to improve feature extraction. The classification accuracies
+of different models for audio-based emotion recognition are
+given in Table I.
+TABLE I
+AUDIO-BASED MODEL ACCURACIES
+Model
+Accuracy (%)
+CNN+LSTM+RNN
+79
+ResNet
+75
+CNN+LSTM
+72
+LSTM
+68
+The
+highest-performing
+model
+in
+this
+class
+is
+CNN+LSTM+RNN,
+with
+an
+accuracy
+of
+79%.
+This
+combined model integrates convolutional layers (for spectral
+feature extraction) and LSTM/RNN layers (for temporal
+dependencies
+in
+speech
+signals).
+Adding
+RNN
+layers
+enhances sequential learning over CNN+LSTM alone.
+The ResNet model, despite being optimized for image-
+based feature extraction, performed fairly well at 75%, im-
+plying that deep residual connections help learn high-level
+speech representations. The CNN+LSTM model fared slightly
+lower at 72%, showing that while CNN and LSTM combined
+capture spatial and temporal cues, the lack of additional
+recurrent layers limits performance. The LSTM-only model
+had the lowest accuracy (68%), proving that LSTMs alone
+struggle without CNN-based feature extraction.
+2) Video-Based Emotion Recognition: Facial expressions
+play a crucial role in emotion recognition, making video-
+based models an effective method. To examine the influ-
+ence of different video-processing architectures, we tested
+3D CNNs and hybrid feature extraction approaches. The
+classification accuracies of video-based models are listed in
+Table II.
+TABLE II
+VIDEO-BASED MODEL ACCURACIES
+Model
+Accuracy (%)
+Feature Extraction Using ResNet 3D + 3D CNN
+92
+3D CNN
+72
+The ResNet 3D + 3D CNN approach significantly outper-
+formed the standalone 3D CNN, achieving 92% accuracy.
+This highlights the importance of pretrained feature extraction
+using deep residual networks before classification. ResNet 3D
+allows hierarchical feature extraction, capturing both spatial
+and temporal dependencies in facial expressions.
+Conversely, the baseline 3D CNN model attained only 72%
+accuracy, showing that while 3D CNNs can process spatial
+and temporal features together, they may not generalize
+well without additional feature refinement. This suggests that
+larger datasets and optimization techniques are needed for
+training a 3D CNN from scratch.
+3) Fusion-Based Emotion Recognition: Although uni-
+modal methods (audio-only or video-only) are informative,
+combining both modalities is anticipated to enhance the
+accuracy and robustness of emotion recognition. Various
+fusion strategies were investigated, and their classification
+performances are listed below.
+The best accuracy of 96% was obtained by the MLP-based
+fusion model, showing that fully connected deep learning
+models can successfully fuse audio and video feature repre-
+sentations. This shows that if both modalities are fused at the
+feature level and then fed into an MLP classifier, the model
+can learn intricate interdependencies, which results in better
+classification performance.
+The Autoencoder + MLP model was close second at
+91% accuracy. Autoencoders help in feature compression and
+dimensionality reduction, which might discard redundant in-
+formation prior to classification. Yet the performance dip from
+the baseline MLP indicates that compression by autoencoders
+can occasionally eliminate the vital features used for proper
+emotion identification.
+TABLE III
+FUSION-BASED MODEL ACCURACIES
+Model
+Accuracy (%)
+MLP
+96
+Autoencoder + MLP
+91
+Averaging Probabilities
+85
+The Averaging Probabilities method, which calculated the
+average of the predicted probabilities of the separate audio
+and video models, gave the lowest accuracy (85%). This
+shows that statistical fusion methods, which do not learn
+the interactions between the modalities, are inferior to deep
+learning-based fusion methods. The findings point towards
+learning-based fusion methods performing better than mere
+probability-based fusion methods by being able to model the
+intricate interactions between speech and facial expressions
+more effectively.
+IV. PROPOSED METHODOLOGY
+A. Data Preprocessing
+1) Audio Preprocessing: Raw audio signals are then pro-
+cessed to yield useful features for emotion classification. Raw
+waveforms have redundant and irrelevant information, so Mel-
+Frequency Cepstral Coefficients (MFCCs) are calculated since
+they are capable of representing human auditory perception
+efficiently. To preserve the temporal pattern in speech, the sig-
+nal is divided into overlapping short frames. A pre-emphasis
+filter is used to boost high-frequency components, and this
+increases the distinctiveness of speech features. The filtered
+signal is next converted to the frequency domain by means of
+the Short-Time Fourier Transform (STFT), represented by:
+X(m, k) =
+N−1
+X
+n=0
+x(n)w(n)e−j2πkn/N
+(1)
+where w(n) represents the Hamming window function,
+which smooths the signal to reduce spectral leakage. The
+This preprint research paper has not been peer reviewed. Electronic copy available at: https://ssrn.com/abstract=5274911
+Preprint not peer reviewed
+
+=============== PAGE 4 ===============
+Fig. 2. Proposed Methodolgy
+output is passed through a Mel-filter bank, which applies a
+triangular filter to simulate human auditory perception:
+S(m) =
+K
+X
+k=1
+|X(m, k)|2Hk
+(2)
+where Hk is the triangular filter function. Finally, Dimen-
+sionality Reduction is performed using the Discrete Cosine
+Transform (DCT) to obtain a compact 40-dimensional MFCC
+feature vector, which serves as input to the deep learning
+model:
+cn =
+M
+X
+m=1
+log(S(m)) cos
+h
+n(m −0.5) π
+M
+i
+(3)
+2) Video Preprocessing: In order to make sure that fa-
+cial expressions are captured well, the video clips are pre-
+processed before they are input into the deep learning model.
+The videos are sampled to 16 frames per sequence to ensure
+temporal consistency between samples. As irrelevant back-
+ground features can add noise, facial detection and cropping
+are done using OpenCV to make sure that only expression-
+based information is preserved. The cropped frames are
+resized to 112 × 112 pixels and normalized with:
+I′ = I −µ
+σ
+(4)
+where µ and σ represent the mean and standard deviation
+of pixel intensities across the dataset. Finally, the processed
+frames are converted into tensors to enable efficient process-
+ing by the deep learning model.
+B. Modality-Specific Models
+1) Audio Model (CNN-BiLSTM-RNN): The extracted
+audio features are passed through a convolutional neural net-
+work (CNN) to learn spatial representations. The convolution
+operation is given by:
+hi,j =
+P
+X
+p=1
+wp · xi+p,j + b
+(5)
+This preprint research paper has not been peer reviewed. Electronic copy available at: https://ssrn.com/abstract=5274911
+Preprint not peer reviewed
+
+=============== PAGE 5 ===============
+Fig. 3. Architecture of Audio Model
+where wp represents the convolution kernel weights, and
+xi,j is the input feature map. These extracted features are then
+fed into Bidirectional Long Short-Term Memory (BiLSTM)
+layers, which capture dependencies across time:
+ht = σ (Whht−1 + Wxxt + bh)
+(6)
+where ht represents the hidden state at time step t, and Wh,
+Wx, and bh are the trainable weight matrices and bias term.
+The final representation is obtained through fully connected
+layers, which map the features to a 128-dimensional vector,
+forming the final audio feature representation.
+2) Video Model (3D CNN - ResNet-18): The preprocessed
+video frames are input to a 3D Convolutional Neural Network
+(3D CNN) built on ResNet-18, which learns spatial and
+temporal patterns from facial expressions. Unlike 2D CNNs,
+which extract spatial features only, 3D CNNs perform convo-
+lutions in both spatial and temporal dimensions, making them
+more effective for video-based tasks. The 3D convolution
+operation is represented as
+hi,j,k =
+P
+X
+p=1
+Q
+X
+q=1
+R
+X
+r=1
+wp,q,r · xi+p,j+q,k+r + b
+(7)
+where (P, Q, R) are the 3D kernel size, and wp,q,r are the
+learnable weights. The feature maps are then processed using
+Global Average Pooling (GAP) to perform dimensionality
+reduction while preserving vital information. The final 512-
+dimensional feature vector is extracted and sent into fully
+connected layers for further processing.
+C. Feature Fusion
+As emotions are expressed both in speech and facial
+expressions, the fusion of these modalities provides a more
+comprehensive and accurate emotion recognition model.
+1) Fusion Mechanism: The fusion mechanism combines
+both feature-level information as well as modality-specific
+predictions of the audio and video models.
+The end fused feature representation includes the follow-
+ing:
+• 40-dimensional MFCC feature vector (audio) from
+speech.
+• 8-dimensional probability vector (audio model output),
+the model’s confidence for each of the 8 emotion classes.
+• 512-dimensional feature vector (video) from facial ex-
+pressions.
+• 8-dimensional probability vector (video model output),
+the model’s confidence in each of the 8 emotion classes.
+2) Prediction-Based Fusion: Aside from feature-level fu-
+sion, the model also fuses predictions at the emotion prob-
+ability distribution level using the output of the audio and
+This preprint research paper has not been peer reviewed. Electronic copy available at: https://ssrn.com/abstract=5274911
+Preprint not peer reviewed
+
+=============== PAGE 6 ===============
+Fig. 4. Architecture of Video Model
+video models. Each model outputs Softmax probabilities that
+correspond to its confidence in each of the 8 emotion classes.
+3) Final Classification Using MLP: A Multi-Layer Per-
+ceptron (MLP) classifier processes the 568-dimensional fused
+representation, applying nonlinear transformations to extract
+deeper representations of emotion.
+D. Model Training
+1) Loss Function: The model is trained with the Categor-
+ical Cross-Entropy (CCE) loss function:
+L = −
+N
+X
+i=1
+yi log( ˆyi)
+(8)
+where:
+• yi represents the true class label (one-hot encoded).
+• ˆyi is the forecasted probability for class i.
+• N is the total number of classes (i.e., 8 for our model).
+To address possible class imbalances in the dataset, the
+model uses a weighted CCE loss function. As some emotions
+might be more frequent than others, greater weightage is given
+to minority classes so that the model won’t be biased against
+the majority classes. The weighted loss is calculated as:
+L = −
+N
+X
+i=1
+wiyi log( ˆyi)
+(9)
+where wi represents the class weight assigned to each
+emotion category.
+This class-weighting strategy ensures that the model learns
+equally from all emotions, even if some are less frequent in
+the dataset.
+2) Optimization Algorithm: The model is trained with the
+Adam optimizer, a gradient-based adaptive learning technique
+that adjusts the learning rate dynamically from past gradients
+and momentum. As opposed to fixed learning rate standard
+Stochastic Gradient Descent (SGD), Adam updates weights
+to achieve faster convergence and stability by making use of:
+θt = θt−1 −
+α
+√vt + ϵmt
+(10)
+where:
+• θt is the model parameters at time step t.
+• α is the learning rate.
+• mt and vt are the first and second moment estimates of
+the gradients, respectively.
+• ϵ is a small constant to avoid division by zero.
+This preprint research paper has not been peer reviewed. Electronic copy available at: https://ssrn.com/abstract=5274911
+Preprint not peer reviewed
+
+=============== PAGE 7 ===============
+Fig. 5. Fusion Mechanism
+Fig. 6. Architecture of Fusion Model
+Adam’s adaptively scaling the learning rates renders it
+highly useful for training deep networks consisting of a mix-
+ture of convolutional, recurrent, and fully connected layers.
+3) Regularization Techniques: To avoid overfitting and
+enhance generalization performance, some regularization
+methods are applied during training:
+Dropout Layers: Dropout is implemented in the fully
+connected layers to randomly shut off neurons while training,
+making the network learn general features and not memorize
+the patterns. It applies a 0.4 dropout rate in critical layers to
+curb overfitting but retain meaningful representations.
+Batch Normalization: Batch normalization is used to
+stabilize training and combat internal covariate shift by nor-
+malizing the activations in every layer. This helps to keep
+gradient updates stable so that they don’t fluctuate wildly,
+which could hinder convergence.
+Early Stopping: To further reduce overfitting, early stop-
+ping is used. The model keeps track of the validation loss
+at all times, and if there is no improvement for a specified
+number of epochs, training is stopped to avoid unnecessary
+weight updates.
+E. Hyperparameter Tuning
+1) Learning Rate Scheduling: A learning rate scheduler is
+used to dynamically change the learning rate during training.
+A higher learning rate is initially used to enable quick weight
+adjustments, but as training continues, the learning rate is
+slowly decreased to enable fine-tuned weight updates.
+The scheduler decreases the learning rate as validation loss
+plateaus to prevent the model from fluctuating about poor
+solutions.
+2) Batch Size Selection: Selecting the best batch size is
+essential to balance training efficiency and generalization.
+• Fast training is facilitated by bigger batch sizes but
+could result in poor generalization through lower noise
+in weight updates.
+This preprint research paper has not been peer reviewed. Electronic copy available at: https://ssrn.com/abstract=5274911
+Preprint not peer reviewed
+
+=============== PAGE 8 ===============
+• Smaller batch sizes improve generalization but are more
+time-consuming to train.
+A grid search method is employed to find the best batch
+size by testing training speed and validation accuracy on
+various configurations.
+3) Number of Layers and Units: The model architecture,
+i.e., the count of CNN filters, LSTM units, and MLP neurons,
+is optimized by hyperparameter tuning methods like:
+Grid Search: Evaluates predefined parameter combina-
+tions.
+Random Search: Selects hyperparameters randomly from
+a specified range, enhancing exploration.
+The goal is to optimize performance while staying efficient.
+F. Cross-Validation Strategy
+To make the model generalize correctly for different dis-
+tributions of data, five-fold cross-validation is adopted. The
+database is split into five subsets wherein:
+• Four subsets are used for training.
+• One subset is used for validation.
+This is done five times so that each sample is utilized for
+both training and validation at least once. Cross-validation
+avoids overfitting by testing the model on various subsets of
+the dataset, making it less dependent on individual training
+instances.
+V. EVALUATION AND TESTING
+Evaluation Metrics: In order to measure the performance
+of the suggested multimodal model, several performance
+measurements are employed.
+1) Accuracy: Accuracy measures the overall correctness
+of the model’s predictions:
+Accuracy =
+TP + TN
+TP + TN + FP + FN
+(11)
+where:
+• TP (True Positives) are properly predicted emotional
+occurrences.
+• TN (True Negatives) are accurately predicted non-
+emotional instances.
+• FP (False Positives) are wrongly labeled with emotions.
+• FN (False Negatives) are true feelings that were missed.
+2) Precision: Precision evaluates how many emotion pre-
+dictions were correct among all predictions made for that
+class:
+Precision =
+TP
+TP + FP
+(12)
+A high precision score indicates that the model minimizes
+false positives, which is especially important in applications
+where misclassification of emotions could lead to incorrect
+decisions.
+3) Recall (Sensitivity): Recall measures the model’s abil-
+ity to correctly identify all actual instances of a specific
+emotion:
+Recall =
+TP
+TP + FN
+(13)
+A low recall score means that the model is missing a
+significant number of emotional expressions, leading to high
+false negatives.
+4) F1-Score: The F1-score is the harmonic mean of preci-
+sion and recall, ensuring a balance between these two metrics:
+F1 = 2 × Precision × Recall
+Precision + Recall
+(14)
+A high F1-score means that the model maintains both
+high precision and high recall, making it a robust metric
+for imbalanced datasets where some emotions appear more
+frequently than others.
+VI. DATASET DESCRIPTION
+The Ryerson Audio-Visual Database of Emotional Speech
+and Song (RAVDESS) is the major dataset used for train-
+ing and testing the multimodal emotion recognition system,
+consisting of audio and video records of 24 actors performing
+eight emotions in a controlled environment. The dataset offers
+a standardized test bench for emotion classification based on
+speech and facial expressions.
+1) Structure of the RAVDESS Dataset: The dataset con-
+tains emotion-tagged audio and video samples. The audio
+recordings are in ‘.wav‘ format, whereas the video recordings
+are in ‘.mp4‘ format. The actors deliver two predefined
+speech statements with different emotional strengths, thereby
+presenting a variety of emotions.
+2) Emotions Included in the Dataset: The database con-
+tains recordings of eight emotion categories: neutral, calm,
+happy, sad, angry, fearful, disgusted, and surprised. All actors
+use the same expressions, which have a balanced split across
+all classes of emotions.
+3) Audio Data: The audio samples consist of speech and
+singing recordings, allowing for the analysis of intonation,
+pitch, and rhythm variations in emotional speech. They pro-
+viding high-fidelity signals suitable for deep learning-based
+feature extraction.
+4) Video Data: The video samples record facial expres-
+sions that match each emotion, enabling spatial and temporal
+analysis of emotional signals. The dataset contains both
+full audio-visual (AV) recordings and video-only samples to
+provide flexibility in modality choice.
+5) Naming Convention of Files: Each file follows a
+structured naming format.
+For example, ‘03-01-01-01-02-02-03.wav‘ represents:
+• Modality: (01 = full-AV, 02 = video-only, 03 = audio-
+only).
+This preprint research paper has not been peer reviewed. Electronic copy available at: https://ssrn.com/abstract=5274911
+Preprint not peer reviewed
+
+=============== PAGE 9 ===============
+• Vocal channel: (01 = speech, 02 = song).
+• Emotion: (e.g., 01 = neutral).
+• Emotional intensity: (01 = normal, 02 = strong).
+• Statement: (01 = “Kids are talking by the door”, 02 =
+“Dogs are sitting by the door”).
+• Repetition: (01 = 1st repetition, 02 = 2nd repetition).
+• Actor: (01 to 24. Odd-numbered actors are male, even-
+numbered actors are female).
+6) Dataset Partitioning for Fusion Model: For model
+training of multimodal fusion, audio and video samples were
+paired to have consistent emotional expression. The dataset
+has 1,360 distinct samples, each with both an audio and video
+recording. The dataset was split into five disjoint folds, with-
+out any repetition within folds. This five-fold cross-validation
+approach provides a balanced distribution of emotions and
+avoids overfitting, enhancing model generalization.
+VII. ALGORITHMS AND TECHNOLOGIES USED
+The suggested multimodal emotion recognition system
+combines deep learning-based audio and video processing
+models, utilizing TensorFlow, PyTorch, and Scikit-Learn for
+feature extraction, training, and testing.
+1) Audio Processing Pipeline: The audio model uses Mel-
+Frequency Cepstral Coefficients (MFCCs) as the main feature
+extraction technique, in addition to a hybrid deep learning
+architecture that includes CNN, BiLSTM, and SimpleRNN
+layers.
+• Convolutional layers extract local spectral features in the
+speech signal.
+• BiLSTM layers extract long-term temporal dependen-
+cies.
+• RNN layers fine-tune sequential information to improve
+emotional representation.
+The model is trained with the Adam optimizer, including
+dropout layers and batch normalization to avoid overfitting.
+Synthetic Minority Over-Sampling Technique (SMOTE) is
+used to address imbalanced emotion classes, providing a
+better-balanced dataset for training.
+2) Video Processing Pipeline: For emotion recognition
+using video as input, the model employs a 3D Convolutional
+Neural Network (3D CNN) from ResNet3D (r3d 18) as the
+base model. Unlike 2D CNNs, which extract only spatial
+information, 3D CNNs handle both spatial and temporal
+characteristics in video frames, enabling the model to interpret
+facial expressions dynamically across time.
+To further refine extracted features, additional 3D convolu-
+tional layers are stacked, followed by global average pooling
+for dimension reduction. The Adam optimizer is used with a
+learning rate of 0.0001, and batch normalization is applied to
+stabilize training.
+3) Fusion Model for Multimodal Emotion Recognition:
+The fusion model integrates both the audio and video feature
+representations for improved classification performance.
+• The audio feature vector consists of 40 MFCCs.
+• The video feature vector is a 512-dimensional ResNet3D
+representation.
+These vectors are concatenated with their respective Soft-
+max probability distributions, resulting in a 568-dimensional
+multimodal feature representation.
+This multimodal representation is then fed into a Multi-
+Layer Perceptron (MLP) classifier with four fully connected
+layers, each regularized using dropout and batch normaliza-
+tion.
+To ensure optimized training, the Adam optimizer is used
+with weight decay, and a StepLR scheduler dynamically
+adjusts the learning rate over the epochs, enhancing model
+convergence.
+4) Hyperparameter Tuning for Audio, Video, and Fusion
+Models: The precise hyperparameters used in the audio,
+video, and fusion models are presented in the ensuing tables.
+A. Hyperparameters for the Audio Model
+The audio model utilizes a sequential pipeline that includes
+feature extraction, convolutional processing, temporal mod-
+eling, and classification. The CNN-BiLSTM-RNN structure
+supports both the local extraction of features and sequential
+pattern learning from long distances and is therefore opti-
+mally suitable for speech-based emotion recognition. Training
+parameters employed in optimizing the model are given in
+Table IV.
+B. Hyperparameters for the Video Model
+The video-based model utilizes ResNet3D (r3d 18) as the
+feature extractor, which is further fine-tuned by adding ad-
+ditional 3D convolutional layers to improve spatial-temporal
+feature learning. The model records facial expressions chang-
+ing dynamically in real time, enabling a strong emotion
+classification system. The training parameters utilized for
+video-based feature extraction and classification are listed in
+Table V.
+C. Hyperparameters for the Fusion Model
+The fusion model exploits both feature-based fusion and
+prediction-based fusion by pairing raw feature vectors with
+Softmax probability distributions. The 40 MFCC features
+extracted from the audio model, the 512-dimensional video
+feature vector, and the 8 probability values across each
+modality are concatenated into a 568-dimensional multimodal
+representation. This feature representation is then fed into
+a fully connected MLP classifier, optimized with the Adam
+optimizer and StepLR learning rate scheduler.
+The combination of audio and video modalities guarantees
+that the model uses both speech and facial expressions to
+categorize emotions with greater precision. The fusion model
+takes advantage of the complementary nature of these modal-
+ities, as audio captures emotional tone and intensity, whereas
+video provides visual cues from facial expressions.
+In general, the model is trained with a highly optimized set
+of hyperparameters, chosen empirically using grid search and
+evaluation methods to produce the best performance. Stable
+This preprint research paper has not been peer reviewed. Electronic copy available at: https://ssrn.com/abstract=5274911
+Preprint not peer reviewed
+
+=============== PAGE 10 ===============
+TABLE IV
+HYPERPARAMETERS FOR THE AUDIO MODEL
+Parameter
+Value
+Learning Rate
+0.0005
+Batch Size
+16
+Epochs
+100
+Dropout Rate
+0.4 (LSTM layers), 0.3 (Dense layer)
+L2 Regularization
+0.01
+Optimizer
+Adam
+CNN Filters
+64, 128, 256, 512 (4 Conv1D layers)
+Kernel Size
+3 (for Conv1D)
+Pooling
+MaxPooling1D (pool size = 2)
+LSTM Units
+256 (first BiLSTM), 512 (second BiLSTM)
+RNN Units
+512 (SimpleRNN layer)
+Loss Function
+Sparse Categorical Cross-Entropy
+Learning Rate Scheduler
+ReduceLROnPlateau (factor = 0.5, patience = 5, min lr = 1e-6)
+Data Augmentation
+SMOTE (for handling imbalanced classes)
+TABLE V
+HYPERPARAMETERS FOR THE VIDEO MODEL
+Parameter
+Value
+Learning Rate
+0.0001
+Batch Size
+32
+Epochs
+15
+Dropout Rate
+0.4
+Optimizer
+Adam
+Base Model
+ResNet3D (r3d 18)
+Additional Conv Layers
+256, 128, 64 filters (kernel size = (3,3,3))
+Pooling
+AdaptiveAvgPool3d (Global Pooling)
+Fully Connected Layers
+32 (FC1), 8 (FC2, output layer)
+Loss Function
+Cross-Entropy Loss
+TABLE VI
+HYPERPARAMETERS FOR THE FUSION MODEL
+Parameter
+Value
+Learning Rate
+0.0005
+Epochs
+1000
+Dropout Rate
+0.5
+Optimizer
+Adam (with weight decay 1e-5)
+Learning Rate Scheduler
+StepLR (step size = 100, gamma = 0.5)
+MLP Layers
+256, 128, 64, 32
+Loss Function
+Cross-Entropy Loss
+training and generalization are guaranteed by the usage of
+dropout, batch normalization, and learning rate scheduling,
+with cross-validation being used to evaluate model robustness
+over varied data distributions.
+VIII. RESULTS
+This section discusses the performance analysis of the
+proposed emotion recognition system under three distinct
+modalities: audio only, video only, and multimodal fusion.
+Five-fold cross-validation was used to validate the stability
+and universal applicability of the model. The accuracy value
+for each fold and the mean of the overall accuracy for each
+modality is compiled in Table VII.
+The findings show that the audio-only model had a mean
+accuracy of 79.24%. This implies that vocal features like tone,
+pitch, and speech rhythm play an important role in emotion
+recognition. Nevertheless, some emotions, especially those
+with similar acoustic features like neutral and sadness, were
+challenging to classify. The performance of the audio-based
+model could also have been influenced by background noise,
+speech intensity variations, and speaker-dependent issues.
+The video-only scheme achieved a significantly superior
+mean accuracy of 92.72%, suggesting that facial expres-
+sions yield a more discriminable and consistent source of
+information for emotion classification. The fluctuation of
+accuracy values from 88.2% to 96.6% indicates that there
+could be certain emotions with very subtle or equivocal
+visual manifestations, resulting in misclassifications. Aspects
+like lighting conditions, occlusion, and diversity of facial
+expressions could have impacted the video-based system
+performance.
+The multimodal fusion model, which combined both audio
+and video features, had the best mean accuracy of 96.06%.
+This remarkable improvement illustrates that the combination
+of speech and facial information improves the overall classi-
+fication performance since the model can use complementary
+information from both modalities. The fusion model outper-
+formed the unimodal models in all folds, demonstrating the
+benefits of using multiple data sources for emotion recogni-
+tion. The decrease in performance variance over the various
+folds indicates that the fusion model is more stable and robust
+than the unimodal models.
+The overall results indicate that video-based emotion recog-
+nition performs better than audio-based recognition, high-
+lighting the importance of facial expressions as a primary
+mode of emotional expression. Nevertheless, the combination
+of both modalities yields the optimal performance, confirming
+that multimodal models are less ambiguous and more robust,
+especially when one modality alone might not be enough to
+accurately discriminate between emotions.
+IX. COMPARATIVE ANALYSIS OF FUSION ACCURACY
+The proposed emotion recognition system achieved a mean
+fusion accuracy of 96.06%, surpassing both the audio-
+only (79.24%) and video-only (92.72%) models. This sec-
+This preprint research paper has not been peer reviewed. Electronic copy available at: https://ssrn.com/abstract=5274911
+Preprint not peer reviewed
+
+=============== PAGE 11 ===============
+TABLE VII
+PERFORMANCE COMPARISON ACROSS MODALITIES
+Fold
+Audio Accuracy (%)
+Video Accuracy (%)
+Fusion Accuracy (%)
+Fold 1
+78.8
+93.0
+95.6
+Fold 2
+80.6
+91.9
+97.6
+Fold 3
+77.4
+93.7
+97.2
+Fold 4
+79.8
+96.6
+95.3
+Fold 5
+79.6
+88.2
+94.6
+Mean Accuracy
+79.24
+92.72
+96.06
+tion presents a detailed comparison with existing literature,
+highlighting key findings and potential areas for further
+enhancement.
+A. Fusion Accuracy from Other Studies
+Fig 7 presents a comparison of fusion accuracy across
+various studies in multimodal emotioan recognition. The
+accuracy values illustrate the improvements brought about by
+different fusion techniques and architectural choices.
+The results indicate that the proposed model outperforms
+all existing methods in terms of fusion accuracy. The closest
+competing method is the transformer-based multimodal fusion
+approach, which achieved 93.59% accuracy. This suggests
+that self-attention mechanisms and deep embeddings con-
+tribute significantly to feature alignment and fusion effec-
+tiveness. Traditional deep learning-based fusion approaches,
+such as cross-attentional fusion and multiplicative fusion,
+show slightly lower accuracy values of 89.25% and 89.00%,
+respectively. The difference in performance can likely be
+attributed to how well each method integrates complementary
+information from the audio and video streams.
+B. Analysis of Model Performance and Robustness
+A crucial aspect of multimodal emotion recognition is
+the stability of the model across different evaluation folds.
+The proposed system exhibits a lower variance across folds
+compared to other methods, indicating better generalization
+across diverse samples. The five-fold cross-validation strategy
+employed ensures that the model is rigorously tested against
+varying distributions of data, making the reported accuracy
+values more reliable.
+Another important consideration is the role of modality-
+specific dependencies. The transformer-based approaches, as
+seen in prior works, appear to benefit from attention-based
+mechanisms that dynamically weigh the importance of fea-
+tures from different modalities. In contrast, simpler concate-
+nation or additive fusion strategies may not be as effective
+in capturing complex interdependencies between audio and
+video signals. The superior performance of the proposed
+system suggests that its fusion strategy effectively mitigates
+redundancy while preserving the most discriminative features
+from each modality.
+Furthermore, while video-based models consistently out-
+perform audio-based models, it is evident that audio still
+contributes valuable information that enhances classification
+accuracy when combined with visual data. The fusion strategy
+used in the proposed system likely addresses the issue of
+feature complementarity more efficiently than prior methods,
+leading to its superior accuracy.
+C. Potential Areas for Future Improvement
+Despite achieving the highest fusion accuracy among the
+compared models, there remain opportunities for further re-
+finement. Transformer-based fusion techniques continue to
+show promise, and exploring variations such as hierarchical
+attention mechanisms or multi-scale feature aggregation could
+yield even better performance. Additionally, incorporating
+domain adaptation techniques to enhance model robustness
+across different datasets may further improve generalization.
+The impact of external factors such as background noise
+in audio or occlusions in video remains an open challenge
+in multimodal emotion recognition. Addressing these is-
+sues through adaptive preprocessing techniques or adversarial
+training could help make the system more robust in real-world
+applications.
+X. CONCLUSION
+The comparative analysis demonstrates that the proposed
+system achieves the highest fusion accuracy (96.06%)
+among existing methods. The superior performance can be
+attributed to an effective fusion strategy that captures comple-
+mentary information from both modalities while minimizing
+redundancy. The findings suggest that transformer-based and
+deep metric learning approaches provide significant benefits
+for multimodal fusion. Future work may explore additional re-
+finements, including enhanced attention mechanisms, adaptive
+feature selection, and domain adaptation techniques, to further
+push the boundaries of multimodal emotion recognition.
+The research also established the superiority of deep
+learning-based fusion over probability-based fusion methods.
+The results indicate that a hybrid solution involving both
+speech and facial expression analysis is essential in devel-
+oping a robust, real-time emotion recognition system. Future
+enhancements may lie in the creation of larger datasets, uti-
+lization of transformer-based architectures, and establishment
+of real-time implementations, laying the ground for sophis-
+ticated applications in human-computer interaction, affective
+computing, and mental health monitoring.
+This preprint research paper has not been peer reviewed. Electronic copy available at: https://ssrn.com/abstract=5274911
+Preprint not peer reviewed
+
+=============== PAGE 12 ===============
+Fig. 7. Comparitive Analysis of the performance for RAVDESS dataset
+REFERENCES
+[1] B. Mocanu, R. Tapu, and T. Zaharia, ”Multimodal emotion recog-
+nition using cross-modal audio-video fusion with attention and deep
+metric learning,” Image Vis. Comput., vol. 133, p. 104676, 2023. doi:
+10.1016/j.imavis.2023.104676.
+[2] M. Z. Uddin and E. G. Nilsson, ”Emotion recognition using
+speech and neural structured learning to facilitate edge intelli-
+gence,” Eng. Appl. Artif. Intell., vol. 94, p. 103775, 2020. doi:
+10.1016/j.engappai.2020.103775.
+[3] S. Zhang, Y. Yang, C. Chen, X. Zhang, Q. Leng, and X. Zhao, ”Deep
+learning-based multimodal emotion recognition from audio, visual,
+and text modalities: A systematic review of recent advancements and
+future prospects,” Expert Syst. Appl., vol. 237, p. 121692, 2024. doi:
+10.1016/j.eswa.2023.121692.
+[4] M. Singh and Y. Fang, ”Emotion recognition in audio and video using
+deep neural networks,” Stanford Univ., Stanford, CA, USA, [Online],
+2020.
+[5] V. John and Y. Kawanishi, ”Audio and video-based emotion recogni-
+tion using multimodal transformers,” in Proc. 26th Int. Conf. Pattern
+Recognit. (ICPR), Montr´eal, QC, Canada, Aug. 2022.
+[6] A. Shrivastava, D. Dubey, M. Verma, and H. Verma, ”Facial emotion
+recognition using video and audio,” Int. J. Res. Publ. Rev., vol. 5, no.
+1, pp. 2517-2527, Jan. 2024. doi: 10.55248/gengpi.5.0124.0261.
+[7] M. S. Hossain and G. Muhammad, ”Emotion recognition using deep
+learning approach from audio-visual emotional big data,” Inf. Fusion,
+vol. 49, pp. 69-78, Sep. 2018. doi: 10.1016/j.inffus.2018.09.008.
+[8] H. Kumar and A. Martin, ”Multimodal approach: Emotion recognition
+from audio and video modality,” in Proc. 7th Int. Conf. Electron.,
+Commun. Aerosp. Technol. (ICECA), Thiruvarur, India, 2023.
+[9] E. Cambria, X. Zhang, R. Mao, M. Chen, and K. Kwok, ”SenticNet 8:
+Fusing emotion AI and commonsense AI for interpretable, trustworthy,
+and explainable affective computing,” IEEE Transactions on Affective
+Computing, 2023.
+[10] Y. Song, Y. Cai, and L. Tan, ”Video-audio emotion recognition based
+on feature fusion deep learning method,” Indiana, USA, 2021.
+[11] J. Han, Z. Zhang, Z. Ren, and B. Schuller, ”EmoBed: Strengthening
+Monomodal Emotion Recognition via Training with Crossmodal Emo-
+tion Embeddings,” IEEE Trans. Affective Comput., vol. 12, no. 3, pp.
+553–567, 2019. doi: 10.1109/TAFFC.2019.2928297.
+[12] S. Wang, G. Peng, Z. Zheng, and Z. Xu, ”Capturing Emotion Distribu-
+tion for Multimedia Emotion Tagging,” IEEE Trans. Affective Comput.,
+vol. 12, no. 4, pp. 821–835, 2021. doi: 10.1109/TAFFC.2019.2900240.
+[13] J. Deng and F. Ren, ”Multi-Label Emotion Detection via Emotion-
+Specified Feature Extraction and Emotion Correlation Learning,” IEEE
+Trans. Affective Comput., vol. 14, no. 1, pp. 475–489, 2023. doi:
+10.1109/TAFFC.2020.3034215.
+[14] S. Kamada and T. Ichimura, ”Multimodal Adaptive Structural Deep
+Belief Network for Emotion Recognition on RAVDESS Dataset,” in
+Proc. 16th IIAI Int. Congr. Adv. Appl. Inform. (IIAI-AAI), 2024. doi:
+10.1109/IIAI-AAI63651.2024.00062.
+[15] A. Li, M. Wu, R. Ouyang, Y. Wang, F. Li, and Z. Lv, ”A Multimodal-
+Driven Fusion Data Augmentation Framework for Emotion Recogni-
+tion,” IEEE Trans. Artif. Intell., 2025. doi: 10.1109/TAI.2025.3537965.
+This preprint research paper has not been peer reviewed. Electronic copy available at: https://ssrn.com/abstract=5274911
+Preprint not peer reviewed
