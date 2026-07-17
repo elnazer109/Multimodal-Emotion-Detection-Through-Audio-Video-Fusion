@@ -113,6 +113,7 @@ max-over-epochs metric, its hyperparameters — so every row is directly compara
 | **kinetics** | Kinetics channel stats + scaler | 81.81 | 81.97 | **93.84** |  -2.22 |
 | **per-clip** | per-clip norm + scaler | 81.73 | 78.25 | **94.25** |  -1.81 |
 | **+ Fig. 4** | per-clip + scaler + refine head on a real 2x7x7 volume | 81.16 | 92.62 | **95.84** |  -0.22 |
+| **+ 35 epochs** | Fig. 4 + video 15 -> 35 epochs | 80.42 | 94.58 | **96.33** |   0.27 ✅ |
 <!-- /AUTO:HEADLINE -->
 
 Per-fold detail:
@@ -152,6 +153,18 @@ Per-fold detail:
 | 5 | 86.53 | 92.04 | 95.71 |
 | **mean** | 81.16 | 92.62 | 95.84 |
 | *sd* | 4.66 | 1.20 | 1.59 |
+
+
+**+ 35 epochs**
+| fold | audio | video | fusion |
+|---|---|---|---|
+| 1 | 80.65 | 91.04 | 94.50 |
+| 2 | 82.28 | 96.95 | 98.17 |
+| 3 | 84.08 | 96.12 | 97.14 |
+| 4 | 77.76 | 94.49 | 95.92 |
+| 5 | 77.35 | 94.29 | 95.92 |
+| **mean** | 80.42 | 94.58 | 96.33 |
+| *sd* | 2.89 | 2.27 | 1.39 |
 
 <!-- /AUTO:PERFOLD -->
 
@@ -246,6 +259,27 @@ reported for completeness with this caveat attached and should not be quoted as 
 without it.
 
 A defensible 95.84 is worth more at a defence than a 98 that dissolves under one question.
+
+**The result, now that it is in.** The 35-epoch arm scores **fusion 96.33 ± 1.39** against the
+paper's 96.06 — numerically ahead. **It is not a win:**
+
+```
+96.33 vs the paper's 96.06 :  t = +0.43,  p = 0.687   ->  a statistical TIE
+35 epochs vs 15 (paired)   :  fusion +0.49,  p = 0.278   ->  not significant
+                              video  +1.96,  p = 0.161   ->  not significant
+                              audio  -0.74,  p = 0.756   ->  not significant
+```
+
+With 5 folds and sd 1.39 the standard error is ~0.6, so a 0.27 gap is invisible. The extra 20
+epochs bought nothing measurable either, and the arm's fold 1 came in *below* the 15-epoch arm
+(91.04 vs 93.08) — which is what a noise-driven difference looks like from the inside.
+
+**The defensible claim is "we match the published result", not "we beat it".** On all three metrics
+we land at or slightly above the paper — audio 80.42 vs 79.24, video 94.58 vs 92.72, fusion 96.33
+vs 96.06 — and every one of those gaps is inside the noise. A successful reproduction of a
+published result is a real outcome. Calling it a win would not survive the first reviewer who runs
+a t-test on five folds, and the contribution here was never the third decimal place: it is §3's
+one-character bug and §1's leak.
 
 ### What the StandardScaler is worth: nothing measurable
 

@@ -212,9 +212,22 @@ def main():
                   "Findings: reproduction and re-evaluation of Emotion Unlocked")
     print(f"wrote {p} ({n} pages, {os.path.getsize(p)/1024:.0f} KB)")
 
-    best = max((a[2][a[2].model == "fusion"]["accuracy"].mean() for a in arms), default=0)
-    print(f"\nbest fusion: {best:.2f}  vs paper 96.06  -> "
-          f"{'*** BEATS THE PAPER ***' if best > PAPER['fusion'] else f'short by {PAPER["fusion"] - best:.2f}'}")
+    # A mean above 96.06 is NOT a win. With 5 folds and sd ~1.4 the standard error is ~0.6, so a
+    # sub-1-point gap is invisible. Report the t-test, not the naive comparison -- an earlier
+    # version of this line printed "BEATS THE PAPER" for a difference of p=0.687.
+    from scipy import stats
+    print()
+    for label, _, d in arms:
+        f = d[d.model == "fusion"]["accuracy"].values
+        if len(f) != 5:
+            continue
+        t, pv = stats.ttest_1samp(f, PAPER["fusion"])
+        if pv < 0.05:
+            verdict = "BEATS the paper" if f.mean() > PAPER["fusion"] else "BELOW the paper"
+        else:
+            verdict = "statistical TIE with the paper"
+        print(f"  {label:14} fusion {f.mean():6.2f} ±{f.std(ddof=1):.2f}  "
+              f"vs 96.06 {f.mean() - PAPER['fusion']:+5.2f}  p={pv:.3f}  -> {verdict}")
 
     # Verify the rendered PDF rather than trusting it. Warn, don't crash -- the PDF is already
     # written and a partial report beats no report against a deadline.
