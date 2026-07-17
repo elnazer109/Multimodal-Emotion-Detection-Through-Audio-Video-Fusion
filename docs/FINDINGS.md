@@ -218,6 +218,35 @@ audio   perclip − kinetics = −0.08   t = −0.13   p = 0.903   not significa
 folds, the standard error is ~4–5 points — large enough to swallow both changes whole. An entire
 narrative was built on noise; it is retained here as §5 material rather than deleted.
 
+### The `+ 35 epochs` arm, and why it is not the headline
+
+*Written before its result was known, so the framing is not retrofitted to the number.*
+
+The paper never states its epoch counts. The notebook chose **15** for video, and its own committed
+fold-1 log shows the model was still improving when it stopped:
+
+```
+epoch 14 | train loss 0.239 acc 93.83 | val loss 0.396 acc 90.02
+epoch 15 | train loss 0.139 acc 96.74 | val loss 0.390 acc 91.24   <- stopped here, still rising
+```
+
+Validation accuracy climbed 90.02 → 91.24 on the final epoch and validation loss was still falling,
+so 15 is where the author stopped, not where the model converged. Training longer is defensible.
+
+**But the comparison is confounded, and in our favour.** The paper's metric — kept deliberately so
+that Table VII stays comparable — is **max-over-epochs validation accuracy on the fold being
+reported**. 35 epochs gives 35 draws at that maximum where 15 gives 15, so the number rises
+**mechanically**, from noise alone, whether or not the model is better. Some of any gain is real
+learning and some is extra lottery tickets, and the two cannot be separated without the epoch count
+the paper never published.
+
+**Therefore the `+ Fig. 4` arm at 15 epochs — matching the notebook, the only reference point that
+exists — is the honest like-for-like comparison against Table VII.** The `+ 35 epochs` arm is
+reported for completeness with this caveat attached and should not be quoted as "beating the paper"
+without it.
+
+A defensible 95.84 is worth more at a defence than a 98 that dissolves under one question.
+
 ### What the StandardScaler is worth: nothing measurable
 
 Fusion: notebook 94.29, per-clip+scaler **94.25** (−0.04), kinetics+scaler 93.84 (−0.45). The
