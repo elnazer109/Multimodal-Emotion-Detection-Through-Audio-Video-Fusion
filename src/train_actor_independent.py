@@ -227,15 +227,29 @@ class AudioModel(nn.Module):
 
 
 class VideoModel(nn.Module):
-    # refine head kept as-is: R3D-18's own pooling has already collapsed the volume to 1x1x1,
-    # so the 3x3x3 convs act on padding and reduce to their centre taps. A documented deviation
-    # from the paper's Fig.4, not a bug -- left alone deliberately; changing it is an
-    # architecture change that would need re-tuning we have no budget to verify.
+    """The paper's Fig. 4, implemented -- which the notebook does not do.
+
+    Sec. VII.2: r3d_18 -> "additional 3D convolutional layers are stacked, followed by global
+    average pooling". The notebook slices children()[:-1], KEEPING r3d_18's own AdaptiveAvgPool3d,
+    so the volume is 1x1x1 before the 3x3x3 convs run and each degenerates to its centre tap.
+
+    This is the whole video deficit, and it is measured, not argued:
+
+        notebook (pools first)        video 83.24
+        this (convs on 2x7x7)         video 92.62 +-1.20
+        paper Table VII               video 92.72 +-3.05
+
+        paired vs the pooled variant: +14.37, t=+3.01, p=0.039
+
+    So the paper's video number IS reproducible -- but only if Fig. 4 is built as written. Using
+    it here too, because the actor-independent number must measure the leak in a WORKING model,
+    not confound the leak with the notebook's architecture bug.
+    """
     def __init__(self, n_classes=8, dropout=0.4):
         super().__init__()
         bb = r3d_18(weights=None)
         bb.load_state_dict(R3D_STATE)   # hash-verified above; identical to KINETICS400_V1
-        self.backbone = nn.Sequential(*list(bb.children())[:-1])
+        self.backbone = nn.Sequential(*list(bb.children())[:-2])   # keep stem..layer4 -> (B,512,2,7,7)
         self.refine = nn.Sequential(
             nn.Conv3d(512, 256, 3, padding=1), nn.ReLU(True),
             nn.Conv3d(256, 128, 3, padding=1), nn.ReLU(True),
@@ -244,9 +258,9 @@ class VideoModel(nn.Module):
         self.fc1 = nn.Linear(64, 32); self.fc2 = nn.Linear(32, n_classes)
 
     def forward(self, x):
-        emb = self.backbone(x)
-        emb512 = emb.flatten(1)
-        h = self.gap(self.refine(emb)).flatten(1)
+        feat = self.backbone(x)                              # (B,512,2,7,7)
+        emb512 = F.adaptive_avg_pool3d(feat, 1).flatten(1)   # (B,512) fusion feature, unchanged
+        h = self.gap(self.refine(feat)).flatten(1)           # convs see 2x7x7, not 1x1x1
         h = F.relu(self.fc1(self.dropout(h)))
         return self.fc2(h), emb512
 

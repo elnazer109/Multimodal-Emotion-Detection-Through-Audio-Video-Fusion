@@ -105,24 +105,42 @@ nothing ever normalises the input.
 | **refine** | + Fig. 4 on a real 2×7×7 volume | *running* | *running* | *running* |
 | **epochs** | + video 15 → 35 epochs | *queued* | *queued* | *queued* |
 
-### The finding: the paper's video number is not reproducible
+### The finding: one line of the notebook costs 9.4 points of video
 
-**No reproduction reaches it — including the notebook's own.**
+**The paper's video number is exactly reproducible — but only if you build Fig. 4 as written.**
 
 | | video mean | sd | fold range |
 |---|---|---|---|
-| paper, Table VII | **92.68** | **3.05** | 88.2 – 96.6 |
-| notebook | 83.24 | — | (fold 1 = 91.24, its best) |
-| kinetics | 81.97 | 8.11 | 71.2 – 88.8 |
-| per-clip | 78.25 | 10.88 | 65.7 – 93.5 |
+| paper, Table VII | **92.68** | 3.05 | 88.2 – 96.6 |
+| **ours, Fig. 4 implemented** | **92.62** | **1.20** | 91.4 – 94.5 |
+| notebook (pools before the convs) | 83.24 | — | (fold 1 = 91.24, its best) |
+| kinetics (pools) | 81.97 | 8.11 | 71.2 – 88.8 |
+| per-clip (pools) | 78.25 | 10.88 | 65.7 – 93.5 |
 
-Two things stand out. The paper's video sits **9–14 points above** every independent run of the
-same architecture. And its **fold-to-fold spread is sd 3.05** where every reproduction shows
-**8–11** — the published result is not just higher, it is far more stable than the architecture
-appears able to be.
+**92.62 against 92.72.** A 0.10 gap, at *lower* variance than the published result (1.20 vs 3.05).
+Paired against the identical pipeline with the pooled head: **+14.37, t = +3.01, p = 0.039.**
 
-Our audio, by contrast, **matches and slightly exceeds** the paper (81.7–81.8 vs 79.24), so the
-pipeline is not broadly broken. The discrepancy is specific to video.
+The cause is a single slice. Paper §VII.2 specifies r3d_18 → *"additional 3D convolutional layers
+are stacked, followed by global average pooling"*. The notebook writes:
+
+```python
+self.backbone = nn.Sequential(*list(backbone.children())[:-1])   # keeps r3d_18's OWN avgpool
+```
+
+`[:-1]` drops only the final `fc`, **keeping r3d_18's `AdaptiveAvgPool3d`**. The volume is
+therefore already 1×1×1 when the `Conv3d(512,256,k=3,padding=1)` stack runs — every conv sees 26/27
+zero-padding and collapses to its centre tap. The refine head becomes three Linear layers wearing
+Conv3d costumes, and the paper's stated architecture is never built.
+
+`[:-2]` keeps `stem..layer4`, emitting **(B, 512, 2, 7, 7)**, and the convs do the spatiotemporal
+work the paper describes. That one character is the entire 9.4-point video deficit — and it is
+essentially free (~0.35 GMAC/sample against r3d_18's own ~40 GFLOP).
+
+**This vindicates the paper and indicts the notebook.** The published video result is real and
+reproducible; this repo's implementation simply is not the paper's architecture.
+
+Our audio also **matches and exceeds** the paper throughout (81.2–81.8 vs 79.24), so no part of the
+pipeline is broadly broken.
 
 ### Retracted: "Kinetics normalization is a 10.75-point regression"
 
@@ -217,6 +235,11 @@ Kept visible so they are not cited from earlier drafts.
   twice in opposite directions about the same 20 lines of code is the signature of reading noise as
   signal**, and the fix was not a better theory but a baseline (the notebook's actual mean) and a
   significance test.
+- **"The paper's video number is not reproducible."** Withdrawn within the hour. It reproduces to
+  **0.10** once Fig. 4 is actually implemented (§3). The claim was made while every arm on the
+  bench happened to share the notebook's architecture bug — an absence of evidence read as
+  evidence of absence. The correct statement was always the narrower one: *no reproduction that
+  pools before the refine convs reaches it.*
 - **"Song is a contaminating domain; dropping it will raise accuracy."** Backwards. Song is the
   *easier* subset by 16–24 points (§2a). Dropping it would delete the easy half and lower the
   score. The arm was built and then cancelled before it consumed a GPU slot, on the strength of the
