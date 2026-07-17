@@ -56,13 +56,30 @@ advertised.
 
 It lands **1.77 short**, and three deviations explain why it is not implementing the paper:
 
-**a) It trains on the wrong data.** Paper §VI.6: *"The dataset has 1,360 distinct samples, each
-with both an audio and video recording."* The notebook pairs **2,452**. Verified against the
-Kaggle file listing: RAVDESS gives 1,440 speech (24 actors × 60 trials) + 1,012 song (23 × 44 —
-actor 18 recorded no song). **Neither 2,452 nor 1,440 equals 1,360**, so the paper's own
-accounting does not reconcile with the dataset's structure — but 2,452 is nearly double what the
-paper describes, and it includes the **song** subset, where actors *sing* rather than speak and
-where **disgust and surprised do not exist at all**.
+**a) It trains on the wrong data — and the extra data is the *easy* half.** Paper §VI.6: *"The
+dataset has 1,360 distinct samples, each with both an audio and video recording."* The notebook
+pairs **2,452**. Verified against the Kaggle file listing: RAVDESS gives 1,440 speech (24 actors ×
+60 trials) + 1,012 song (23 × 44 — actor 18 recorded no song). **Neither 2,452 nor 1,440 equals
+1,360**, so the paper's own accounting does not reconcile with the dataset's structure.
+
+The notebook's extra ~1,000 clips are the **song** subset, where actors *sing* rather than speak
+and where **disgust and surprised do not exist at all**. Measured on the held-out actor
+predictions, song is far *easier*:
+
+| model | speech | song | |
+|---|---|---|---|
+| audio | 45.14 | **69.27** | song **+24.13** |
+| fusion | 43.19 | **59.78** | song **+16.59** |
+| video | 46.74 | 42.69 | speech +4.05 |
+
+Neutral alone runs 25.0% on speech against **84.8%** on song. Singing exaggerates emotional
+prosody — pitch, duration and intensity all become more distinct — which is why *audio* gains 24
+points while video is unaffected.
+
+So the notebook is, if anything, **flattered** by training on ~80% more data than the paper
+describes, most of it easier — and it *still* lands 1.77 points below the paper's number.
+
+(We predicted the opposite and were wrong; see §5.)
 
 **b) It does not implement Fig. 4.** Paper §VII.2 specifies r3d_18 → *"additional 3D convolutional
 layers are stacked, followed by global average pooling"*. The notebook slices
@@ -156,6 +173,10 @@ Kept visible so they are not cited from earlier drafts.
   so `v.iloc[0]` picking either yields identical frames. **Cosmetic**: it buys determinism, not
   accuracy.
 - **"Kinetics normalization is a fix."** Measured as a 10.75-point regression. See §3.
+- **"Song is a contaminating domain; dropping it will raise accuracy."** Backwards. Song is the
+  *easier* subset by 16–24 points (§2a). Dropping it would delete the easy half and lower the
+  score. The arm was built and then cancelled before it consumed a GPU slot, on the strength of the
+  saved predictions.
 - **"The `refine` head is a bug."** It is a deliberate, documented deviation (cell 21's comment
   says so) — but it *does* mean the notebook doesn't implement the paper's Fig. 4. Reclassified
   from bug to unimplemented specification.
