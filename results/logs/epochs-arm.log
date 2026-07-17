@@ -1,0 +1,49 @@
+GPU: Tesla T4  sm_75  torch 2.10.0+cu128
+GPU verified: a real kernel launched and returned.
+r3d_18 weights verified: sha256 b3b3357e... matches official
+===== fold 1/5 | 1961/491 clips | actors in BOTH train and val: 24/24  <-- this is the leak =====
+    f1/audio: early stop @ 62
+    f1/audio: best val acc 80.65
+    f1/video: early stop @ 17
+    f1/video: best val acc 91.04
+  fold 1 fusion best val acc: 94.50%   (paper fold target ~94-96%)
+===== fold 2/5 | 1961/491 clips | actors in BOTH train and val: 24/24  <-- this is the leak =====
+    f2/audio: early stop @ 56
+    f2/audio: best val acc 82.28
+    f2/video: best val acc 96.95
+  fold 2 fusion best val acc: 98.17%   (paper fold target ~94-96%)
+===== fold 3/5 | 1962/490 clips | actors in BOTH train and val: 24/24  <-- this is the leak =====
+    f3/audio: early stop @ 93
+    f3/audio: best val acc 84.08
+    f3/video: early stop @ 25
+    f3/video: best val acc 96.12
+  fold 3 fusion best val acc: 97.14%   (paper fold target ~94-96%)
+===== fold 4/5 | 1962/490 clips | actors in BOTH train and val: 24/24  <-- this is the leak =====
+    f4/audio: early stop @ 37
+    f4/audio: best val acc 77.76
+    f4/video: early stop @ 33
+    f4/video: best val acc 94.49
+  fold 4 fusion best val acc: 95.92%   (paper fold target ~94-96%)
+===== fold 5/5 | 1962/490 clips | actors in BOTH train and val: 24/24  <-- this is the leak =====
+    f5/audio: early stop @ 56
+    f5/audio: best val acc 77.35
+    f5/video: early stop @ 25
+    f5/video: best val acc 94.29
+  fold 5 fusion best val acc: 95.92%   (paper fold target ~94-96%)
+== per-clip + scaler + refine head + video 35 epochs (metric caveat: see header) ==
+         mean   std
+model
+audio   80.42  2.89
+fusion  96.33  1.39
+video   94.58  2.27
+fusion mean: 96.33%   |   paper reported: 94.29%   |   delta: +2.04
+This number is comparable to 94.29% -- same split, same metric, same hyperparameters.
+It says the published architecture implemented correctly does better on the published
+benchmark. It does NOT say the model reads emotion better: actors still leak across these
+folds. For that claim see the actor-independent arm.
+/usr/local/lib/python3.12/dist-packages/mistune.py:435: SyntaxWarning: invalid escape sequence '\|'
+  cells[i][c] = re.sub('\\\\\|', '|', cell)
+/usr/local/lib/python3.12/dist-packages/nbconvert/filters/filter_links.py:36: SyntaxWarning: invalid escape sequence '\_'
+  text = re.sub(r'_', '\_', text) # Escape underscores in display text
+[NbConvertApp] Converting notebook __script__.ipynb to html
+[NbConvertApp] Writing 385012 bytes to __results__.html
