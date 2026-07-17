@@ -1,0 +1,4 @@
+{ "id": "<your-account>/ravdess-face-cache", "title": "ravdess-face-cache",
+  "code_file": "../../src/cache_faces.py", "language": "python", "kernel_type": "script",
+  "is_private": true, "enable_gpu": false, "enable_internet": false,
+  "dataset_sources": ["orvile/ravdess-dataset"] }

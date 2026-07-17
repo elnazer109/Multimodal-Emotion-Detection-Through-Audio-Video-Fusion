@@ -1,0 +1,5 @@
+{ "id": "<your-account>/ravdess-paper-refine", "title": "ravdess-paper-refine",
+  "code_file": "../../src/paper_refine.py", "language": "python", "kernel_type": "script",
+  "is_private": true, "enable_gpu": true, "enable_internet": true,
+  "dataset_sources": ["orvile/ravdess-dataset", "sabreenelkamash/r3d-18-pretrained-weights"],
+  "kernel_sources": ["<your-account>/ravdess-face-cache"] }
