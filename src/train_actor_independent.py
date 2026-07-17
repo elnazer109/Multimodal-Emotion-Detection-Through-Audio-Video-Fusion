@@ -76,11 +76,20 @@ CFG = dict(
 
 EMOTIONS = ["neutral", "calm", "happy", "sad", "angry", "fearful", "disgust", "surprised"]
 
-# CHANGED: R3D_18_Weights.KINETICS400_V1 expects Kinetics channel statistics. The original
-# standardized each clip by its own mean/std, which fights the pretrained weights. Applied at
-# load time (not baked into the cache) so it stays a free parameter.
-KIN_MEAN = torch.tensor([0.43216, 0.394666, 0.37645]).view(3, 1, 1, 1)
-KIN_STD = torch.tensor([0.22803, 0.22145, 0.216989]).view(3, 1, 1, 1)
+# Per-clip standardization, as the original notebook and the paper do.
+#
+# An earlier version of this file swapped in Kinetics channel statistics, on the theory that
+# per-clip standardization "fights" the KINETICS400_V1 pretrained weights. That was measured and
+# it is false -- on the paper's protocol it cost 10.75 points of video accuracy and destabilised
+# it badly (81.97 +-8.11 against the paper's 92.72, with folds collapsing to 71.22):
+#
+#     paper Table VII video   92.72
+#     notebook, per-clip      91.24  (fold 1)
+#     Kinetics, fold 1        85.54
+#     Kinetics, fold 3        71.22
+#
+# RAVDESS records each actor under consistent studio lighting, so standardizing each clip removes
+# nuisance variation that matters more here than matching Kinetics' global stats. Reverted.
 
 # ---------------------------------------------------------------- pretrained weights, offline
 # Kaggle kernels have no network here (enable_internet is set, but DNS still fails -- the account
@@ -175,9 +184,9 @@ class VideoDS(Dataset):
     def __len__(self): return len(self.idx)
     def __getitem__(self, i):
         j = self.idx[i]
-        x = torch.from_numpy(np.asarray(FACES[j]).copy()).float().div_(255.0)  # (T,H,W,C)
-        x = x.permute(3, 0, 1, 2)                                               # (C,T,H,W)
-        x = (x - KIN_MEAN) / KIN_STD
+        x = torch.from_numpy(np.asarray(FACES[j]).copy()).float()   # (T,H,W,C), 0..255
+        x = (x - x.mean()) / (x.std() + 1e-6)                        # per-clip, scalar mu/sigma
+        x = x.permute(3, 0, 1, 2)                                    # (C,T,H,W)
         return x, int(LABELS[j])
 
 
