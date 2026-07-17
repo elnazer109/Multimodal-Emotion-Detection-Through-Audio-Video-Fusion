@@ -96,33 +96,70 @@ nothing ever normalises the input.
 
 ## 3. What we changed, and what it cost or bought
 
-| arm | change | video | fusion |
+| arm | change | audio | video | fusion |
+|---|---|---|---|---|
+| paper (published) | — | 79.24 | **92.72** ± 3.05 | **96.06** |
+| notebook (committed) | — | 80.67 | **83.24** | 94.29 |
+| **kinetics** | Kinetics channel stats + scaler | 81.81 | 81.97 ± 8.11 | 93.84 |
+| **perclip** | per-clip norm restored + scaler | 81.73 | 78.25 ± 10.88 | 94.25 |
+| **refine** | + Fig. 4 on a real 2×7×7 volume | *running* | *running* | *running* |
+| **epochs** | + video 15 → 35 epochs | *queued* | *queued* | *queued* |
+
+### The finding: the paper's video number is not reproducible
+
+**No reproduction reaches it — including the notebook's own.**
+
+| | video mean | sd | fold range |
 |---|---|---|---|
-| paper (published) | — | 92.72 | **96.06** |
-| notebook (committed) | — | 91.2 | 94.29 |
-| **kinetics** | Kinetics channel stats + scaler | **81.97** ± 8.11 | **93.84** |
-| **perclip** | per-clip norm restored + scaler | *running* | *running* |
-| **refine** | + Fig. 4 on a real 2×7×7 volume | *running* | *running* |
-| **speech** | + 1,440 clips, the paper's data scale | *queued* | *queued* |
+| paper, Table VII | **92.68** | **3.05** | 88.2 – 96.6 |
+| notebook | 83.24 | — | (fold 1 = 91.24, its best) |
+| kinetics | 81.97 | 8.11 | 71.2 – 88.8 |
+| per-clip | 78.25 | 10.88 | 65.7 – 93.5 |
 
-### A negative result worth publishing
+Two things stand out. The paper's video sits **9–14 points above** every independent run of the
+same architecture. And its **fold-to-fold spread is sd 3.05** where every reproduction shows
+**8–11** — the published result is not just higher, it is far more stable than the architecture
+appears able to be.
 
-We replaced the paper's per-clip video standardization with **Kinetics channel statistics**, on the
-theory that feeding Kinetics-pretrained weights per-clip-standardized inputs "fights" them. **The
-theory is wrong.** Video fell **10.75 points** and became unstable — std 8.11, with folds
-collapsing to 71.22 — and fusion landed *below* even the notebook's 94.29.
+Our audio, by contrast, **matches and slightly exceeds** the paper (81.7–81.8 vs 79.24), so the
+pipeline is not broadly broken. The discrepancy is specific to video.
 
-The likely mechanism runs the other way: per-clip standardization removes per-clip lighting and
-contrast variation, and RAVDESS records every actor under consistent studio conditions, so
-removing that nuisance variation matters more here than matching Kinetics' global statistics.
+### Retracted: "Kinetics normalization is a 10.75-point regression"
 
-**This is a real finding**: "match the pretrained model's input statistics" is standard advice, and
-on this dataset it costs 10 points.
+**This claim was wrong and is withdrawn.** It came from comparing our video against the *paper's*
+92.72 and against the notebook's *fold 1* (91.24 — its single best fold), rather than against the
+notebook's actual mean of **83.24**.
 
-### What the scaler is worth
+Measured correctly, against the notebook's mean:
 
-Fusion fell only **0.45** below the notebook **while being fed video 10 points worse**. The
-StandardScaler absorbed almost the entire hit. That is the headroom the per-clip arm should recover.
+| arm | video vs notebook | fusion vs notebook |
+|---|---|---|
+| kinetics | −1.27 | −0.45 |
+| per-clip | −4.99 | −0.04 |
+
+And a **paired t-test across identical folds** (same seed, same splits) says the two arms are
+indistinguishable:
+
+```
+video   perclip − kinetics = −3.72   t = −0.77   p = 0.486   not significant
+fusion  perclip − kinetics = +0.41   t = +0.39   p = 0.719   not significant
+audio   perclip − kinetics = −0.08   t = −0.13   p = 0.903   not significant
+```
+
+**The normalization choice does not measurably matter here.** With video sd of 8–11 across only 5
+folds, the standard error is ~4–5 points — large enough to swallow both changes whole. An entire
+narrative was built on noise; it is retained here as §5 material rather than deleted.
+
+### What the StandardScaler is worth: nothing measurable
+
+Fusion: notebook 94.29, per-clip+scaler **94.25** (−0.04), kinetics+scaler 93.84 (−0.45). The
+scaler was the one change with a clean mechanical rationale — raw MFCC means near −300 beside 0–1
+softmax probabilities, with `FusionMLP`'s first BatchNorm sitting *after* the first Linear — and it
+moves nothing. The fusion MLP evidently copes with the scale mismatch on its own.
+
+**Fusion is also strikingly insensitive to video quality**: video ranging 78.25 → 81.97 across arms
+moves fusion by 0.41. The audio branch and the softmax probabilities appear to carry the fusion
+result, with the 512-dim video embedding contributing little.
 
 ---
 
@@ -172,7 +209,14 @@ Kept visible so they are not cited from earlier drafts.
   omits `modality`. But modality 01 (full-AV) and 02 (video-only) are the *same visual recording*,
   so `v.iloc[0]` picking either yields identical frames. **Cosmetic**: it buys determinism, not
   accuracy.
-- **"Kinetics normalization is a fix."** Measured as a 10.75-point regression. See §3.
+- **"Kinetics normalization is a fix."** Withdrawn — no measurable effect either way (§3).
+- **"Kinetics normalization is a 10.75-point regression."** Also withdrawn, and the more
+  instructive error. Having found the first claim wrong, I over-corrected into an equally confident
+  claim in the opposite direction — built from comparing against the paper's 92.72 and the
+  notebook's single best fold rather than its mean. A paired t-test says p=0.486. **Being wrong
+  twice in opposite directions about the same 20 lines of code is the signature of reading noise as
+  signal**, and the fix was not a better theory but a baseline (the notebook's actual mean) and a
+  significance test.
 - **"Song is a contaminating domain; dropping it will raise accuracy."** Backwards. Song is the
   *easier* subset by 16–24 points (§2a). Dropping it would delete the easy half and lower the
   score. The arm was built and then cancelled before it consumed a GPU slot, on the strength of the
