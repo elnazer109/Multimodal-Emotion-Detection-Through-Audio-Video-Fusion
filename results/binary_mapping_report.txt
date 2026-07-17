@@ -1,0 +1,46 @@
+2452 predictions from 5 folds, 24 actors
+
+================ fusion ================
+              mapping  positive_pct  majority_baseline  acc_probsum  acc_argmax  balanced_acc    f1  precision  recall   auc  over_baseline
+     negative_valence          53.8              53.83        79.12       78.87         78.64 81.41      78.17   84.92 86.68          25.29
+   depressed_sad_only          15.3              84.67        86.46       84.83         67.07 46.96      58.80   39.10 81.58           1.79
+depressed_sad_fearful          30.7              69.33        80.71       80.34         73.74 63.92      74.96   55.72 83.27          11.38
+
+================ fusion_paper ================
+              mapping  positive_pct  majority_baseline  acc_probsum  acc_argmax  balanced_acc    f1  precision  recall   auc  over_baseline
+     negative_valence          53.8              53.83        82.38       82.10         82.40 83.38      84.69   82.12 90.14          28.55
+   depressed_sad_only          15.3              84.67        87.15       84.83         76.41 59.25      57.68   60.90 87.28           2.49
+depressed_sad_fearful          30.7              69.33        79.57       78.67         76.25 67.02      66.36   67.69 85.37          10.24
+
+================ audio ================
+              mapping  positive_pct  majority_baseline  acc_probsum  acc_argmax  balanced_acc    f1  precision  recall   auc  over_baseline
+     negative_valence          53.8              53.83        77.45       77.24         76.90 80.06      76.39   84.09 85.53          23.61
+   depressed_sad_only          15.3              84.67        84.38       82.95         66.27 44.09      48.87   40.16 81.78          -0.29
+depressed_sad_fearful          30.7              69.33        77.77       77.45         74.18 64.17      63.46   64.89 83.35           8.44
+
+  !! depressed_sad_only: 84.38% accuracy is at or BELOW the 84.67% majority baseline -- this mapping learns nothing.
+
+================ video ================
+              mapping  positive_pct  majority_baseline  acc_probsum  acc_argmax  balanced_acc    f1  precision  recall   auc  over_baseline
+     negative_valence          53.8              53.83        71.37       70.27         71.60 72.05      75.92   68.56 82.71          17.54
+   depressed_sad_only          15.3              84.67        85.85       82.42         54.62 17.18      83.72    9.57 76.71           1.18
+depressed_sad_fearful          30.7              69.33        71.94       67.05         55.59 22.52      73.53   13.30 75.10           2.61
+
+negative_valence confusion (fusion, out-of-fold):
+               pred_nonneg  pred_negative
+true_nonneg            819            313
+true_negative          199           1121
+
+per-emotion positive rate under negative_valence (fusion):
+            mean  count
+emotion                
+angry      0.896    376
+calm       0.168    376
+disgust    0.875    192
+fearful    0.899    376
+happy      0.266    376
+neutral    0.149    188
+sad        0.739    376
+surprised  0.635    192
+
+note: mappings are declarative -- edit MAPPINGS and re-run; no retraining involved.
