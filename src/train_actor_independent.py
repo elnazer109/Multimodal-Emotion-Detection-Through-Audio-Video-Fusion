@@ -480,10 +480,20 @@ df = pd.DataFrame(rows)
 summary = df.groupby("model")[["accuracy", "balanced_accuracy", "f1"]].agg(["mean", "std"])
 print("\n\n=================== ACTOR-INDEPENDENT (GroupKFold by actor) ===================")
 print(summary.round(2).to_string())
-print("\nPaper's reported fusion accuracy under the leaky random split: 94.29% (not re-run; "
-      "cited from the committed notebook outputs)")
-print("\nThe fusion-paper vs fusion-oof gap is the value of the fusion-feature leak alone,")
-print("measured on identical held-out actors.")
+fp = df[df.model == "fusion-paper"]["accuracy"].mean()
+fo = df[df.model == "fusion-oof"]["accuracy"].mean()
+print(f"""
+Paper (video paper.pdf, Table VII), actors leaking across folds : 96.06
+  -> actor-independent, paper's own fusion protocol             : {fp:5.2f}   ({fp - 96.06:+.2f})
+  -> actor-independent, out-of-fold fusion features             : {fo:5.2f}   ({fo - 96.06:+.2f})
+
+The first gap is what holding out actors costs. The second ({fo - fp:+.2f}) is the
+fusion-feature leak alone, measured on identical held-out actors: the paper builds the
+fusion MLP's training features by running the training clips through models that trained
+on them, so its softmax inputs are near-perfect in train and merely good at inference.
+
+96.06 was never re-run here; it is the paper's own reported mean. The notebook in this
+repo scores 94.29 on that protocol, i.e. it never reproduced its own paper either.""")
 summary.to_csv(os.path.join(OUT, "summary.csv"))
 
 preds = pd.DataFrame(oof_records)
