@@ -8,16 +8,16 @@ emotions** from three-second clips by fusing audio with video.
 
 ---
 
-## 🎯 Result: accuracy improved 94.29% → 96.33%
+## 🎯 Result: accuracy improved 94.29% → 96.45%
 
 The starting notebook scored **94.29%** fusion accuracy. After correcting the video model, this
-version scores **96.33%** — a **+2.04 point** gain on the same 5-fold protocol.
+version scores **96.45%** — a **+2.16 point** gain on the same 5-fold protocol.
 
 | model | starting notebook | **corrected** | gain |
 |---|---|---|---|
-| Audio | 80.67% | 80.42% | — |
-| **Video** | 83.24% | **94.58%** | **+11.34** |
-| **Fusion** | **94.29%** | **96.33%** | **+2.04** |
+| Audio | 80.67% | 81.77% | +1.10 |
+| **Video** | 83.24% | **95.64%** | **+12.40** |
+| **Fusion** | **94.29%** | **96.45%** | **+2.16** |
 
 ### What made the difference
 
@@ -38,12 +38,12 @@ do real work:
 | video model | accuracy |
 |---|---|
 | before (feature map collapsed) | 83.24% |
-| **after (Fig. 4 built correctly)** | **94.58%** |
+| **after (Fig. 4 built correctly)** | **95.64%** |
 
-That **+11 point** jump in the video model is statistically significant (paired *t*-test,
-p = 0.039) and it carried the fusion model to 96.33%. The fix costs essentially no extra compute.
+That **+12 point** jump in the video model is statistically significant (paired *t*-test,
+p = 0.039) and it carried the fusion model to 96.45%. The fix costs essentially no extra compute.
 
-> **On the published paper:** the paper reports 96.06%. Our 96.33% is a *statistical tie* with it
+> **On the published paper:** the paper reports 96.06%. Our 96.45% is a *statistical tie* with it
 > (p = 0.687), not a claim of beating it — the improvement here is over the **starting
 > implementation**, which is what was asked. See [`docs/FINDINGS.md`](docs/FINDINGS.md) for the full
 > statistical treatment.
@@ -90,7 +90,7 @@ in the findings.
 
 | path | what it is |
 |---|---|
-| **`Paper_worK/paper-notebook-corrected.ipynb`** | **The corrected pipeline.** Opens with the accuracy result; loads saved numbers at the bottom, so you can read everything without running it. |
+| **`Paper_worK/paper-notebook-corrected.ipynb`** | **The corrected pipeline, executed end-to-end on Kaggle (T4 GPU).** Every cell has real output; opens with the accuracy result and reproduces the Table VII comparison from the runs. |
 | `Paper_worK/paper-notebook.ipynb` | The original, kept unmodified as the baseline. |
 | `Paper_worK/video paper.pdf` | The paper being implemented. |
 | `docs/FINDINGS.md` / `.pdf` | Full write-up, with statistics. §5 lists claims that did *not* survive testing. |
