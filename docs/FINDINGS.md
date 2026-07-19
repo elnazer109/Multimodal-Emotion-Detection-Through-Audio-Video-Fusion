@@ -18,12 +18,12 @@ it scores far less:
 <!-- AUTO:HONEST -->
 | model | actor-independent | sd | vs paper's 96.06 |
 |---|---|---|---|
-| audio | **54.51** | 4.48 | -41.55 |
-| video | **45.35** | 16.54 | -50.71 |
-| **fusion** (paper's fusion protocol) | **64.10** | 6.71 | -31.96 |
-| **fusion** (out-of-fold features) | **48.15** | 9.26 | -47.91 |
+| audio | **54.08** | 6.99 | -41.98 |
+| video | **52.56** | 14.71 | -43.50 |
+| **fusion** (paper's fusion protocol) | **69.43** | 7.03 | -26.63 |
+| **fusion** (out-of-fold features) | **46.01** | 14.58 | -50.05 |
 
-Holding out actors costs **31.96** points. The fusion-feature leak costs a further **15.95**, measured on identical held-out actors, so the two are separable and additive.
+Holding out actors costs **26.63** points. The fusion-feature leak costs a further **23.42**, measured on identical held-out actors, so the two are separable and additive.
 <!-- /AUTO:HONEST -->
 
 **This is a flaw in the publication, not in anyone's implementation.** The paper's §F says:
@@ -40,16 +40,16 @@ Corroborating signal, before any of our changes: the **video-only** model scores
 paper's protocol. Video-only emotion recognition at 92.72% from 3-second clips is not plausible
 from facial expression; it is the memorisation signature showing directly.
 
-**Two leaks, and they are additive.** The 33-point gap is actor leakage. A further **12.73**
-points comes from a second, independent leak: the paper builds the fusion MLP's *training*
-features by running the training clips through the models that trained on them (notebook cell 35),
-so the 8-dim softmax inputs are near-perfect one-hots in training and merely ~80% right at
-inference. The MLP learns to trust a signal that degrades the moment it is deployed. Measured on
-*identical* held-out actors, so it is isolated from the actor leak.
+**Two leaks.** The **~27-point** gap (96.06 → 69.43) is actor leakage. A second, independent leak
+sits on top of it: the paper builds the fusion MLP's *training* features by running the training
+clips through the models that trained on them (notebook cell 35), so the 8-dim softmax inputs are
+near-perfect one-hots in training and merely ~80% right at inference. With **out-of-fold** features
+that fixes, the fusion number falls further to **~46%** — though that estimate is high-variance
+(sd ≈ 15 over 5 held-out-actor folds), so treat the *size* of the second leak as approximate while
+the actor leak itself (sd ≈ 7) is solid.
 
-**The model does read something.** Errors cluster affectively — sad↔fearful (87), angry↔disgust
-(82), happy↔calm (79) — not randomly. The architecture works. It is just far weaker than
-advertised.
+**The model does read something.** Errors cluster affectively — fearful↔sad (93), angry↔disgust
+(86), calm↔sad (82) — not randomly. The architecture works. It is just far weaker than advertised.
 
 ---
 

@@ -75,9 +75,9 @@ The full write-up is in **[`docs/FINDINGS.md`](docs/FINDINGS.md)**
 
 **How robust is 96% really?** The standard 5-fold split places each actor in both training and
 validation (they record every sentence twice). Re-evaluated with **actors fully held out**
-(`GroupKFold`), the same model scores **≈ 63%** — it recognises emotion in *seen* speakers far
-better than in new ones. Worth knowing before deployment; two runs agree within ~1 point. This is a
-property of the dataset, not of this implementation.
+(`GroupKFold`), the same model scores **≈ 69%** — a ~27-point drop. It recognises emotion in *seen*
+speakers far better than in new ones. Worth knowing before deployment. This is a property of the
+dataset, not of this implementation.
 
 **A depressed / not-depressed head** was explored as a post-hoc mapping of the 8 emotions. It is
 reported with each mapping's majority-class baseline beside it — because RAVDESS is imbalanced,
